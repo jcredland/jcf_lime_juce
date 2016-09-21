@@ -21,6 +21,7 @@
 
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 
 namespace jcf
 {
@@ -52,5 +53,7 @@ namespace jcf
     }
 
 
+#include "ui/jcf_font_awesome.h"
 };
+
 
