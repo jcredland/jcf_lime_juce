@@ -51,7 +51,7 @@ public:
 		g.restoreState();
 	}
 
-	static Drawable * createDrawable(int iconCode)
+	static DrawableText * createDrawable(int iconCode)
 	{
 		auto d = new DrawableText();
 		d->setColour(Colours::lightgrey);
