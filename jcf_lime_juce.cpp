@@ -2,8 +2,6 @@
 
 #include "jcf_lime_juce.h"
 
-#include "windows.h"
-
 namespace jcf
 {
 	using namespace juce;
