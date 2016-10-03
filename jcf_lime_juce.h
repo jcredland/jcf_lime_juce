@@ -26,10 +26,37 @@
 
 #include <random>
 #include <vector>
+#include <set>
+
+namespace juce
+{
+	inline bool operator<(const Identifier &a, const Identifier & b)
+	{
+		return a.toString() < b.toString();
+	}
+}
 
 namespace jcf
 {
+
+#define log_Ctor {std::stringstream s; s << std::hex << int64(this) << " constructed " << typeid(*this).name() << std::endl; DBG(s.str());}
+#define log_Dtor {std::stringstream s; s << std::hex << int64(this) << " deleted " << typeid(*this).name() << std::endl; DBG(s.str());}
+
     using namespace juce;
+
+	template <typename ComponentType>
+	void addAndMakeVisibleComponent(Component * parent, ComponentType & comp)
+	{
+		parent->addAndMakeVisible(comp);
+	}
+
+	template<typename ComponentType, typename... Args>
+	void addAndMakeVisibleComponent(Component * parent, ComponentType & comp, Args&... args)
+	{
+		parent->addAndMakeVisible(comp);
+
+		addAndMakeVisibleComponent(parent, args...);
+	}
 
     /**
      Loads a valuetree compatible XML file. Returna ValueTree::invalid if something goes wrong.
@@ -103,21 +130,39 @@ namespace jcf
 		{
 			InterProcessLock::ScopedLockType l(*lock);
 
-			state = jcf::loadValueTreeFromXml(file);
+			auto newState = jcf::loadValueTreeFromXml(file);
 
-			if (state == ValueTree::invalid)
-				state = ValueTree("state");
+			if (newState == ValueTree::invalid)
+				newState = ValueTree("state");
 
-			state.addListener(this);
+			newState.addListener(this);
 
-			listeners.call(&Listener::optionsChanged);
+			std::set<Identifier> props;
+
+			for (auto i = 0; i < newState.getNumProperties(); ++i)
+				props.insert(newState.getPropertyName(i));
+
+			for (auto i = 0; i < state.getNumProperties(); ++i)
+				props.insert(state.getPropertyName(i));
+
+
+			std::set<Identifier> propsChanged;
+
+			for (auto prop : props)
+				if (!state[prop].equals(newState[prop]))
+					propsChanged.insert(prop);
+
+			state = newState;
+
+			for (auto prop: propsChanged)
+				listeners.call(&Listener::optionsChanged, prop);
 		}
 
 		class Listener
 		{
 		public:
 			virtual ~Listener() {}
-			virtual void optionsChanged() = 0;
+			virtual void optionsChanged(const Identifier & identifierThatChanged) = 0;
 		};
 
 		void addListener(Listener* listener) { listeners.add(listener); }
@@ -131,13 +176,18 @@ namespace jcf
 		void timerCallback() override
 		{
 			save();
-			listeners.call(&Listener::optionsChanged);
+
+			for (auto i : identifiersThatChanged) 
+				listeners.call(&Listener::optionsChanged, i);
+
+			identifiersThatChanged.clear();
 			stopTimer();
 		}
 
-		void valueTreePropertyChanged(ValueTree&, const Identifier&) override
+		void valueTreePropertyChanged(ValueTree&, const Identifier&identifier) override
 		{
 			triggerTimer();
+			identifiersThatChanged.insert(identifier);
 		}
 
 		void valueTreeChildAdded(ValueTree&, ValueTree&) override { triggerTimer(); }
@@ -146,6 +196,7 @@ namespace jcf
 		void valueTreeParentChanged(ValueTree&) override { triggerTimer(); }
 
 		File file;
+		std::set<Identifier> identifiersThatChanged;
 		ScopedPointer<InterProcessLock> lock;
 		ListenerList<Listener> listeners;
 	};
@@ -153,6 +204,7 @@ namespace jcf
 
 
 #include "ui/jcf_font_awesome.h"
+#include "utils/pitch.h"
 #include "crypto/jcf_blowfish_extended.h"
 #include "crypto/jcf_secure_credentials.h"
 
