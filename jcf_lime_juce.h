@@ -158,6 +158,15 @@ namespace jcf
 				listeners.call(&Listener::optionsChanged, prop);
 		}
 
+		/**
+		Sets an option if it doesn't already have a value in the configuration file.
+		*/
+		void setDefault(const Identifier & identifier, var defaultValue)
+		{
+			if (!state.hasProperty(identifier))
+				setOption(identifier, defaultValue);
+		}
+
 		class Listener
 		{
 		public:

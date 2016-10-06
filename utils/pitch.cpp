@@ -1,16 +1,17 @@
 
-double Pitch::getMidiNote()
+double Pitch::getMidiNote() const
 {
 	return 12.0 * log2(freq / 440.0) + 69.0;
 }
-int Pitch::getNearestMidiNote()
+
+int Pitch::getNearestMidiNote() const
 {
-	return (int)round(getMidiNote());
+	return int(std::round(getMidiNote()));
 }
 
-int Pitch::getErrorInCents()
+int Pitch::getErrorInCents() const
 {
-	return (int)std::abs(round(100.0 * (getMidiNote() - double(getNearestMidiNote()))));
+	return int(std::abs(std::round(100.0 * (getMidiNote() - double(getNearestMidiNote())))));
 }
 
 String Pitch::getMidiNoteAsString(int midinote)
@@ -22,10 +23,10 @@ String Pitch::getMidiNoteAsString(int midinote)
 	return String(notes[notenumber]) + String(octave);
 }
 
-int Pitch::getOctaveNumber()
+int Pitch::getOctaveNumber() const
 {
 	int midinote = getNearestMidiNote();
-	return (midinote / 12) - 1;
+	return midinote / 12 - 1;
 }
 
 bool Pitch::setFrequencyFromNoteName(const String& notename)
