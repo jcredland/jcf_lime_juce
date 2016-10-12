@@ -35,6 +35,7 @@ public:
 	bool setFrequencyFromNoteName(const String& note);
 
 private:
+	static constexpr int offsetMiddleC = 2; // set to 1 for C4 = midi note 60
 	double freq;
 };
 

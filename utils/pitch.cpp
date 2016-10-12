@@ -18,7 +18,7 @@ String Pitch::getMidiNoteAsString(int midinote)
 {
 	static const char* notes[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 	int notenumber = midinote % 12;
-	int octave = (midinote / 12) - 1; // Octave numbers are somewhat non-standard, one man's C3 is another man's C5.
+	int octave = (midinote / 12) - offsetMiddleC; // Octave numbers are somewhat non-standard, one man's C3 is another man's C5.
 
 	return String(notes[notenumber]) + String(octave);
 }
@@ -26,7 +26,7 @@ String Pitch::getMidiNoteAsString(int midinote)
 int Pitch::getOctaveNumber() const
 {
 	int midinote = getNearestMidiNote();
-	return midinote / 12 - 1;
+	return midinote / 12 - offsetMiddleC;
 }
 
 bool Pitch::setFrequencyFromNoteName(const String& notename)
@@ -40,7 +40,7 @@ bool Pitch::setFrequencyFromNoteName(const String& notename)
 	const String octString(s.retainCharacters("-0123456789"));
 	int octave(octString.getIntValue());
 
-	if ((octave < -1) || (octave > 9) || (!octString.containsAnyOf("0123456789")))
+	if (octave < -1 || octave > 9 || !octString.containsAnyOf("0123456789"))
 	{
 		octave = getOctaveNumber();
 	}
@@ -60,7 +60,7 @@ bool Pitch::setFrequencyFromNoteName(const String& notename)
 
 	if (noteNumber == -1) return false;
 
-	noteNumber += (octave + 1) * 12;
+	noteNumber += (octave + offsetMiddleC) * 12;
 
 	freq = pow(2.0, (double(noteNumber) - 69.0) / 12.0) * 440.0;
 	return true;

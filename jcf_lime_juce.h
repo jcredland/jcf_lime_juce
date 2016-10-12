@@ -28,6 +28,12 @@
 #include <vector>
 #include <set>
 
+#ifdef _WIN32
+#define EXPLORER_OR_FINDER "Explorer"
+#else 
+#define EXPLORER_OR_FINDER "Finder"
+#endif
+
 namespace juce
 {
 	inline bool operator<(const Identifier &a, const Identifier & b)
@@ -156,6 +162,8 @@ namespace jcf
 
 			for (auto prop: propsChanged)
 				listeners.call(&Listener::optionsChanged, prop);
+
+			state.addListener(this);
 		}
 
 		/**
