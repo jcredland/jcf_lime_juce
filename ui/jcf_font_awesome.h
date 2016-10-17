@@ -51,12 +51,12 @@ public:
 		g.restoreState();
 	}
 
-	static DrawableText * createDrawable(int iconCode)
+	static DrawableText * createDrawable(int iconCode, float height = 20.0f)
 	{
 		auto d = new DrawableText();
 		d->setColour(Colours::lightgrey);
 		d->setText(String::charToString(iconCode));
-		d->setFont(Font(getTypeface()).withHeight(20.0f), true);
+		d->setFont(Font(getTypeface()).withHeight(height), true);
 		d->setJustification(Justification::centred);
 		d->setBoundingBox(RelativeParallelogram(Rectangle<float>(0.0f, 0.0f, 20.0f, 20.0f)));
 		return d;

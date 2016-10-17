@@ -27,6 +27,7 @@
 #include <random>
 #include <vector>
 #include <set>
+#include <sstream>
 
 #ifdef _WIN32
 #define EXPLORER_OR_FINDER "Explorer"
