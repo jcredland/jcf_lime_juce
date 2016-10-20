@@ -51,6 +51,19 @@ public:
 		g.restoreState();
 	}
 
+  static void drawIconRotated(Graphics & g, int iconCode, const Rectangle<float> & area, float radians)
+  {
+    g.saveState();
+    
+    GlyphArrangement icon;
+    icon.addFittedText(Font(getTypeface()).withHeight(area.getHeight()), String::charToString(iconCode),
+                       area.getX(), area.getY(), area.getWidth(), area.getHeight(),
+                       Justification::centred, 1);
+    
+    icon.draw(g, AffineTransform::rotation(radians, area.getCentreX(), area.getCentreY()));
+    g.restoreState();
+  }
+  
 	static DrawableText * createDrawable(int iconCode, float height = 20.0f)
 	{
 		auto d = new DrawableText();
