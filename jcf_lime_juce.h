@@ -65,6 +65,31 @@ namespace jcf
 		addAndMakeVisibleComponent(parent, args...);
 	}
 
+	inline String bytesToFormattedString(int64 bytes, int precision)
+	{
+		String prefix;
+		String unit;
+
+		std::vector<String> units = { "", "Kb", "Mb", "Gb", "Tb" };
+
+		if (bytes < 0)
+			prefix = "-";
+
+		bytes = abs(bytes);
+
+		if (bytes != 0)
+		{
+			auto unitIndex = int(std::floor(log(bytes) / log(1024))); // i.e. for 1024 we get 1, for 1024*1024 we get 2... 
+			unitIndex = jlimit(0, int(units.size()) - 1, unitIndex);
+
+			auto b = double(bytes) / std::pow(1024.0, unitIndex);
+
+			return prefix + String(b, precision) + units[unitIndex];
+		}
+
+		return String(0);
+	}
+
     /**
      Loads a valuetree compatible XML file. Returna ValueTree::invalid if something goes wrong.
      */
