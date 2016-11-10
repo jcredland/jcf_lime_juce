@@ -74,7 +74,7 @@ public:
 			key.push_back(fixedKeyDataLen24[i]);
 	}
 
-	void clear()
+	void clear() override
 	{
 		for (auto & v : key)
 			v = 0;
