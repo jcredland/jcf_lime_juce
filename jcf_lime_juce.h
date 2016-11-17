@@ -124,7 +124,7 @@ namespace jcf
 		if (bytes < 0)
 			prefix = "-";
 
-		bytes = abs(bytes);
+        bytes = std::abs(bytes);
 
 		if (bytes != 0)
 		{
