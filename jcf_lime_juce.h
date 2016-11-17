@@ -51,6 +51,55 @@ namespace jcf
 
     using namespace juce;
 
+	class ScopedNoDenormals
+	{
+	public:
+		ScopedNoDenormals()
+		{
+			oldMXCSR = _mm_getcsr();
+			int newMXCSR = oldMXCSR | 0x8040;
+			_mm_setcsr(newMXCSR);
+		};
+
+		~ScopedNoDenormals() { _mm_setcsr(oldMXCSR); };
+
+		int oldMXCSR;
+	};
+
+	class MultiAsyncUpdater
+		:
+		AsyncUpdater
+	{
+	public:
+		MultiAsyncUpdater()
+		{}
+
+		// pass by value is more efficent where the std::function will be created in place 
+		// from a lambda.  See http://stackoverflow.com/questions/18365532/should-i-pass-an-stdfunction-by-const-reference
+		void callOnMessageThread(std::function<void()> callback)
+		{
+			ScopedLock l(lock);
+			queue.push_back(std::move(callback));
+			triggerAsyncUpdate();
+		}
+
+	private:
+		void handleAsyncUpdate() override
+		{
+			lock.enter();
+			auto queueCopy = queue;
+			queue.clear();
+			lock.exit();
+
+			for (auto & func : queueCopy)
+				func();
+		}
+
+		CriticalSection lock;
+		std::vector<std::function<void()>> queue;
+	};
+
+
 	template <typename ComponentType>
 	void addAndMakeVisibleComponent(Component * parent, ComponentType & comp)
 	{
