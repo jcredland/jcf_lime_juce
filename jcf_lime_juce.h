@@ -191,7 +191,7 @@ namespace jcf
 
 		void actionListenerCallback(const String& message) override
 		{
-			if (message == file.getFullPathName())
+			if (message == file.getFullPathName() && suppressCallback-- > 0)
 				load();
 		}
 
@@ -199,13 +199,14 @@ namespace jcf
 
 		const var operator[](const Identifier & identifier) const { return state[identifier]; }
 
-		void save() const
+		void save() 
 		{
 			{
 				InterProcessLock::ScopedLockType l(*lock);
 				jcf::saveValueTreeToXml(file, state);
 			}
 
+			suppressCallback++;
 			MessageManager::getInstance()->broadcastMessage(file.getFullPathName());
 		}
 
@@ -269,13 +270,14 @@ namespace jcf
 
 		void timerCallback() override
 		{
+			stopTimer(); // in case we get a modal loop in listeners.call
+
 			save();
 
 			for (auto i : identifiersThatChanged) 
 				listeners.call(&Listener::optionsChanged, i);
 
 			identifiersThatChanged.clear();
-			stopTimer();
 		}
 
 		void valueTreePropertyChanged(ValueTree&, const Identifier&identifier) override
@@ -293,6 +295,7 @@ namespace jcf
 		std::set<Identifier> identifiersThatChanged;
 		ScopedPointer<InterProcessLock> lock;
 		ListenerList<Listener> listeners;
+		int suppressCallback{ 0 };
 	};
 
 

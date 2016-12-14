@@ -63,6 +63,22 @@ public:
     icon.draw(g, AffineTransform::rotation(radians, area.getCentreX(), area.getCentreY()));
     g.restoreState();
   }
+
+  class IconComponent : public Component
+  {
+  public:
+	  IconComponent(int iconCode, const Colour & colour): colour(colour), iconCode(iconCode) {}
+
+	  void paint(Graphics& g) override
+	  {
+		  g.setColour(colour);
+		  drawIcon(g, iconCode, getLocalBounds().toFloat());
+	  }
+
+  private:
+	  const Colour& colour;
+	  int iconCode;
+  };
   
   static DrawableText * createDrawable(int iconCode, float height = 20.0f, Colour fgColour = Colours::lightgrey)
 	{
