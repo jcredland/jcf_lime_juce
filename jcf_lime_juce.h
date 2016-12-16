@@ -164,6 +164,22 @@ namespace jcf
         return Result::ok();
     }
 
+	/** A very simple SVG or PNG rendering component */
+	class BasicImageComponent : public Component
+	{
+	public:
+		BasicImageComponent(const File & file) { d = Drawable::createFromImageFile(file); }
+
+		void paint(Graphics& g) override
+		{
+			if (d)
+				d->drawWithin(g, getLocalBounds().toFloat(), RectanglePlacement::centred, 1.0f);
+		}
+
+	private:
+		ScopedPointer<Drawable> d;
+	};
+
 	/**
 	A ValueTree based alternative to the JUCE PropertiesFile.
 	*/
