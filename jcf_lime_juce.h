@@ -312,9 +312,55 @@ namespace jcf
 		ScopedPointer<InterProcessLock> lock;
 		ListenerList<Listener> listeners;
 		int suppressCallback{ 0 };
+
+		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AppOptions)
 	};
 
+	/**
+	* When triggered calls a function no faster than the rate limit.  Calls it immediately if the
+	* rate hasn't been exceeded.  Guarantees that the function is called at least once after each
+	* trigger.  Can be triggered from any thread, the callback occurs on the message thread.
+	*/
+	class RateLimitedCallback : Timer, AsyncUpdater
+	{
+	public:
+		RateLimitedCallback(std::function<void()> function, int rateLimitMilliSeconds) : function(function), rateLimitMilliSeconds(rateLimitMilliSeconds) {}
 
+		void trigger()
+		{
+			triggerAsyncUpdate();
+		}
+
+	private:
+		void handleAsyncUpdate() override
+		{
+			if (!isTimerRunning())
+			{
+				function();
+				startTimer(rateLimitMilliSeconds);
+			}
+			else
+			{
+				startTimer(rateLimitMilliSeconds);
+				updatePending = true;
+			}
+		}
+
+		void timerCallback() override
+		{
+			stopTimer();
+
+			if (updatePending)
+			{
+				function();
+				updatePending = false;
+			}
+		}
+
+		std::function<void()> function;
+		int rateLimitMilliSeconds;
+		bool updatePending{ false };
+	};
 
 #include "ui/jcf_font_awesome.h"
 #include "utils/pitch.h"
