@@ -53,6 +53,69 @@ namespace jcf
 
     using namespace juce;
 
+
+	class ApplicationActivtyMonitor
+		:
+		public Timer, MouseListener
+	{
+	public:
+		/**
+		timeoutSeconds is the length of time the application has to be in the
+		background or not moving the mouse before we determine the user is
+		not longer using the app.
+		 */
+		ApplicationActivtyMonitor(int timeoutSeconds) : timeout(timeoutSeconds)
+		{
+			startTimer(1000);
+			Desktop::getInstance().addGlobalMouseListener(this);
+		}
+
+		~ApplicationActivtyMonitor()
+		{
+			Desktop::getInstance().removeGlobalMouseListener(this);
+		}
+
+		void onApplicationBecomesActive(std::function<void()> fun)
+		{
+			applicationNowActiveCallback = fun;
+		}
+
+		bool isApplicationRecentlyActive() const
+		{
+			return isActive;
+		}
+
+	private:
+		void mouseMove(const MouseEvent&) override { counter = 0; }
+
+		void timerCallback() override
+		{
+			if (counter == 0)
+			{
+				if (!isActive)
+				{
+					isActive = true;
+
+					if (applicationNowActiveCallback)
+						applicationNowActiveCallback();
+				}
+			}
+			else
+			{
+				if (counter >= timeout)
+					isActive = false;
+				else
+					counter++;
+			}
+		}
+
+		bool isActive{ true };
+		int timeout;
+		int counter{ 0 };
+		std::function<void()> applicationNowActiveCallback;
+	};
+
+
 	class ScopedNoDenormals
 	{
 	public:
