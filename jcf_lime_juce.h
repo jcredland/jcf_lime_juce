@@ -429,6 +429,7 @@ namespace jcf
 #include "utils/pitch.h"
 #include "crypto/jcf_blowfish_extended.h"
 #include "crypto/jcf_secure_credentials.h"
+#include "utils/lock_free_call_queue.h"
 
 };
 
