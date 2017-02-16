@@ -266,8 +266,8 @@ namespace jcf
 		{
 			save();
             
-            if (MessageManager::getInstanceWithoutCreating())
-            	MessageManager::getInstanceWithoutCreating()->deregisterBroadcastListener(this);
+			if (MessageManager::getInstanceWithoutCreating())
+				MessageManager::getInstanceWithoutCreating()->deregisterBroadcastListener(this);
 		}
 
 		void actionListenerCallback(const String& message) override
