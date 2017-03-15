@@ -325,6 +325,11 @@ namespace jcf
 			state.addListener(this);
 		}
 
+		Value getValueObject(const Identifier & identifier)
+		{
+			return state.getPropertyAsValue(identifier, nullptr);
+		}
+
 		/**
 		Sets an option if it doesn't already have a value in the configuration file.
 		*/
