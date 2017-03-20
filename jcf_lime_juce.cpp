@@ -9,6 +9,7 @@ namespace jcf
 #include "utils/pitch.cpp"
 #include "crypto/jcf_blowfish_extended.cpp"
 #include "crypto/jcf_secure_credentials.cpp"
+#include "utils/app_options.cpp"
 
 }
 

@@ -131,40 +131,6 @@ namespace jcf
 		int oldMXCSR;
 	};
 
-	class MultiAsyncUpdater
-		:
-		AsyncUpdater
-	{
-	public:
-		MultiAsyncUpdater()
-		{}
-
-		// pass by value is more efficent where the std::function will be created in place 
-		// from a lambda.  See http://stackoverflow.com/questions/18365532/should-i-pass-an-stdfunction-by-const-reference
-		void callOnMessageThread(std::function<void()> callback)
-		{
-			ScopedLock l(lock);
-			queue.push_back(std::move(callback));
-			triggerAsyncUpdate();
-		}
-
-	private:
-		void handleAsyncUpdate() override
-		{
-			lock.enter();
-			auto queueCopy = queue;
-			queue.clear();
-			lock.exit();
-
-			for (auto & func : queueCopy)
-				func();
-		}
-
-		CriticalSection lock;
-		std::vector<std::function<void()>> queue;
-	};
-
-
 	template <typename ComponentType>
 	void addAndMakeVisibleComponent(Component * parent, ComponentType & comp)
 	{
@@ -244,148 +210,6 @@ namespace jcf
 	private:
 		ScopedPointer<Drawable> d;
 	};
-
-	/**
-	A ValueTree based alternative to the JUCE PropertiesFile.
-	*/
-	class AppOptions
-		:
-		public ValueTree::Listener,
-		Timer,
-		ActionListener
-	{
-	public:
-		explicit AppOptions(const File & file) : file(file)
-		{
-			lock = new InterProcessLock(file.getFullPathName());
-			load();
-			MessageManager::getInstance()->registerBroadcastListener(this);
-		}
-
-		~AppOptions()
-		{
-			save();
-            
-			if (MessageManager::getInstanceWithoutCreating())
-				MessageManager::getInstanceWithoutCreating()->deregisterBroadcastListener(this);
-		}
-
-		void actionListenerCallback(const String& message) override
-		{
-			if (message == file.getFullPathName() && suppressCallback-- > 0)
-				load();
-		}
-
-		void setOption(const Identifier & identifier, var value) { state.setProperty(identifier, value, nullptr); }
-
-		const var operator[](const Identifier & identifier) const { return state[identifier]; }
-
-		void save() 
-		{
-			{
-				InterProcessLock::ScopedLockType l(*lock);
-				jcf::saveValueTreeToXml(file, state);
-			}
-
-			suppressCallback++;
-			MessageManager::getInstance()->broadcastMessage(file.getFullPathName());
-		}
-
-		void load()
-		{
-			InterProcessLock::ScopedLockType l(*lock);
-
-			auto newState = jcf::loadValueTreeFromXml(file);
-
-			if (newState == ValueTree::invalid)
-				newState = ValueTree("state");
-
-			newState.addListener(this);
-
-			std::set<Identifier> props;
-
-			for (auto i = 0; i < newState.getNumProperties(); ++i)
-				props.insert(newState.getPropertyName(i));
-
-			for (auto i = 0; i < state.getNumProperties(); ++i)
-				props.insert(state.getPropertyName(i));
-
-
-			std::set<Identifier> propsChanged;
-
-			for (auto prop : props)
-				if (!state[prop].equals(newState[prop]))
-					propsChanged.insert(prop);
-
-			state = newState;
-
-			for (auto prop: propsChanged)
-				listeners.call(&Listener::optionsChanged, prop);
-
-			state.addListener(this);
-		}
-
-		Value getValueObject(const Identifier & identifier)
-		{
-			return state.getPropertyAsValue(identifier, nullptr);
-		}
-
-		/**
-		Sets an option if it doesn't already have a value in the configuration file.
-		*/
-		void setDefault(const Identifier & identifier, var defaultValue)
-		{
-			if (!state.hasProperty(identifier))
-				setOption(identifier, defaultValue);
-		}
-
-		class Listener
-		{
-		public:
-			virtual ~Listener() {}
-			virtual void optionsChanged(const Identifier & identifierThatChanged) = 0;
-		};
-
-		void addListener(Listener* listener) { listeners.add(listener); }
-		void removeListener(Listener* listener) { listeners.remove(listener); }
-
-		/** You can attach data directly to the state tree, but the propertyChanged callback might not work properly */
-		ValueTree state;
-	private:
-		void triggerTimer() { startTimer(1000); }
-
-		void timerCallback() override
-		{
-			stopTimer(); // in case we get a modal loop in listeners.call
-
-			save();
-
-			for (auto i : identifiersThatChanged) 
-				listeners.call(&Listener::optionsChanged, i);
-
-			identifiersThatChanged.clear();
-		}
-
-		void valueTreePropertyChanged(ValueTree&, const Identifier&identifier) override
-		{
-			triggerTimer();
-			identifiersThatChanged.insert(identifier);
-		}
-
-		void valueTreeChildAdded(ValueTree&, ValueTree&) override { triggerTimer(); }
-		void valueTreeChildRemoved(ValueTree&, ValueTree&, int) override { triggerTimer(); }
-		void valueTreeChildOrderChanged(ValueTree&, int, int) override { triggerTimer(); }
-		void valueTreeParentChanged(ValueTree&) override { triggerTimer(); }
-
-		File file;
-		std::set<Identifier> identifiersThatChanged;
-		ScopedPointer<InterProcessLock> lock;
-		ListenerList<Listener> listeners;
-		int suppressCallback{ 0 };
-
-		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AppOptions)
-	};
-
 	/**
 	* When triggered calls a function no faster than the rate limit.  Calls it immediately if the
 	* rate hasn't been exceeded.  Guarantees that the function is called at least once after each
@@ -437,6 +261,8 @@ namespace jcf
 #include "crypto/jcf_blowfish_extended.h"
 #include "crypto/jcf_secure_credentials.h"
 #include "utils/lock_free_call_queue.h"
+#include "utils/multi_async_updater.h"
+#include "utils/app_options.h"
 
 };
 
