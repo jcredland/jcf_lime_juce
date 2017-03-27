@@ -256,6 +256,11 @@ namespace jcf
 		bool updatePending{ false };
 	};
 
+	/** Note Windows also prohibits: Any other character that the target file system does not allow.  We can't test for this here easily. */
+	bool isValidWindowsFilename(const String& file);
+
+	bool isValidWindowsPathLength(const File& file);
+
 #include "ui/jcf_font_awesome.h"
 #include "utils/pitch.h"
 #include "crypto/jcf_blowfish_extended.h"
