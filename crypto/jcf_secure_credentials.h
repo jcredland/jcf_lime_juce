@@ -66,7 +66,7 @@ public:
 			MemoryBlock block;
 			localKeyDataLen32.loadFileAsData(block);
 
-			for (int i = 0; i < block.getSize(); ++i)
+			for (size_t i = 0; i < block.getSize(); ++i)
 				key.push_back(*(static_cast<uint8*>(block.getData()) + i));
 		}
 
