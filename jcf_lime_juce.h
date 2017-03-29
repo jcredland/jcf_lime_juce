@@ -201,6 +201,11 @@ namespace jcf
 	public:
 		BasicImageComponent(const File & file) { d = Drawable::createFromImageFile(file); }
 
+		void replaceColour(const Colour & original, const Colour & newColour)
+		{
+			d->replaceColour(original, newColour);
+		}
+
 		void paint(Graphics& g) override
 		{
 			if (d)
