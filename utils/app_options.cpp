@@ -113,7 +113,10 @@ void jcf::AppOptions::timerCallback()
 
 	save();
 
-	for (auto i : identifiersThatChanged)
+	for (auto & i : identifiersThatChanged)
+		listeners.call(&Listener::optionsChangedEarlyCallback, i);
+
+	for (auto & i : identifiersThatChanged)
 		listeners.call(&Listener::optionsChanged, i);
 
 	identifiersThatChanged.clear();
