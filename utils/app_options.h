@@ -36,7 +36,7 @@ public:
 	public:
 		virtual ~Listener();
 		/** Is called before optionsChanged in case you need to do some early work! */
-		virtual void optionsChangedEarlyCallback(const Identifier & identifierThatChanged) {};
+		virtual void optionsChangedEarlyCallback(const Identifier & /* identifierThatChanged */) {};
 		virtual void optionsChanged(const Identifier & identifierThatChanged) = 0;
 	};
 
