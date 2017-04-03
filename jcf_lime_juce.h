@@ -230,6 +230,11 @@ namespace jcf
 			triggerAsyncUpdate();
 		}
 
+		void setRateLimit(int milliseconds)
+		{
+			rateLimitMilliSeconds = milliseconds;
+		}
+
 	private:
 		void handleAsyncUpdate() override
 		{
