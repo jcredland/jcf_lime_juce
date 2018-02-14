@@ -99,6 +99,8 @@ namespace jcf
 					if (applicationNowActiveCallback)
 						applicationNowActiveCallback();
 				}
+
+				counter++;
 			}
 			else
 			{

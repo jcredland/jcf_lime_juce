@@ -45,7 +45,7 @@ Result BlowfishExtended::decrypt(MemoryBlock& source, String& resultingString) c
 
 	auto data = static_cast<const char *>(source.getData());
 
-	resultingString = String::fromUTF8(data, source.getSize());
+	resultingString = String::fromUTF8(data, int(source.getSize()));
 
 	return Result::ok();
 }
@@ -105,7 +105,7 @@ void BlowfishExtended::addPaddingPKCS5(MemoryBlock& memoryBlock)
 	if (numBytes == 0)
 		numBytes = 8;
 
-	std::vector<uint8> padding(numBytes, numBytes);
+	std::vector<uint8> padding(numBytes, uint8(numBytes));
 	memoryBlock.append(padding.data(), padding.size());
 }
 
