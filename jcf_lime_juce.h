@@ -245,7 +245,7 @@ namespace jcf
 			}
 			else
 			{
-				startTimer(rateLimitMilliSeconds);
+				//startTimer(rateLimitMilliSeconds);
 				updatePending = true;
 			}
 		}
