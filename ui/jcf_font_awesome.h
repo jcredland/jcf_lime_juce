@@ -87,7 +87,11 @@ public:
 		d->setText(String::charToString(iconCode));
 		d->setFont(Font(getTypeface()).withHeight(height), true);
 		d->setJustification(Justification::centred);
+#if JUCE_MAJOR_VERSION > 4
+		d->setBoundingBox(Parallelogram<float>(Rectangle<float>(0.0f, 0.0f, 20.0f, 20.0f)));
+#else
 		d->setBoundingBox(RelativeParallelogram(Rectangle<float>(0.0f, 0.0f, 20.0f, 20.0f)));
+#endif
 		return d;
 	}
 
