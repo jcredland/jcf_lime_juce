@@ -205,12 +205,13 @@ namespace jcf
 
 		void replaceColour(const Colour & original, const Colour & newColour)
 		{
-			d->replaceColour(original, newColour);
+            if (d != nullptr)
+                d->replaceColour(original, newColour);
 		}
 
 		void paint(Graphics& g) override
 		{
-			if (d)
+			if (d != nullptr)
 				d->drawWithin(g, getLocalBounds().toFloat(), RectanglePlacement::centred, 1.0f);
 		}
 
