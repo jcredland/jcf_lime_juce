@@ -65,7 +65,7 @@ void BlowfishExtended::encryptMemoryBlock(MemoryBlock& memoryBlock) const
 
 	jassert(numBytes % 8 == 0); // should be true: see addPaddingPKCS5
 
-	for (auto i = 0; i < numBytes; i += 8)
+	for (size_t i = 0; i < numBytes; i += 8)
 		blowFish.encrypt(
 			*(static_cast<uint32*>(data) + i / sizeof(uint32)),
 			*(static_cast<uint32*>(data) + i / sizeof(uint32) + 1)
@@ -84,7 +84,7 @@ Result BlowfishExtended::decryptMemoryBlock(MemoryBlock& memoryBlock) const
 		return Result::fail("Invalid input data");
 	}
 
-	for (auto i = 0; i < numBytes; i += 8)
+	for (size_t i = 0; i < numBytes; i += 8)
 		blowFish.decrypt(
 			*(static_cast<uint32*>(data) + i / sizeof(uint32)),
 			*(static_cast<uint32*>(data) + i / sizeof(uint32) + 1)
