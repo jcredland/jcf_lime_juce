@@ -51,6 +51,7 @@ namespace jcf
 #define log_Ctor {std::stringstream s; s << std::hex << int64(this) << " constructed " << typeid(*this).name() << std::endl; DBG(s.str());}
 #define log_Dtor {std::stringstream s; s << std::hex << int64(this) << " deleted " << typeid(*this).name() << std::endl; DBG(s.str());}
 
+#define JCF_ASSERT_THIS_IS_THE_MESSAGE_THREAD {jassert(MessageManager::getInstance()->isThisTheMessageThread());}
     using namespace juce;
 
 
