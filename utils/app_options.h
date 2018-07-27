@@ -43,9 +43,11 @@ public:
 	void addListener(Listener* listener);
 	void removeListener(Listener* listener);
 
-	/** You can attach data directly to the state tree, but the propertyChanged callback might not work properly */
-	ValueTree state;
 private:
+    /** This was formerly public, but there's a massive issue with loading
+     * preferences if we have Value objects based on properties. */
+	ValueTree state;
+
 	void triggerTimer();
 
 	void timerCallback() override;

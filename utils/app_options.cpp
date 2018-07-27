@@ -1,6 +1,8 @@
 jcf::AppOptions::AppOptions(const File& file): file(file)
 {
 	lock = new InterProcessLock(file.getFullPathName());
+    state = ValueTree{ "state" };
+    state.addListener(this);
 	load();
 	MessageManager::getInstance()->registerBroadcastListener(this);
 }
@@ -40,6 +42,7 @@ void jcf::AppOptions::save()
 	}
 
 	suppressCallback++;
+
 	MessageManager::getInstance()->broadcastMessage(file.getFullPathName());
 }
 
@@ -49,32 +52,10 @@ void jcf::AppOptions::load()
 
 	auto newState = jcf::loadValueTreeFromXml(file);
 
-	if (newState == ValueTree::invalid)
-		newState = ValueTree("state");
+    if (newState == ValueTree::invalid)
+        return;
 
-	newState.addListener(this);
-
-	std::set<Identifier> props;
-
-	for (auto i = 0; i < newState.getNumProperties(); ++i)
-		props.insert(newState.getPropertyName(i));
-
-	for (auto i = 0; i < state.getNumProperties(); ++i)
-		props.insert(state.getPropertyName(i));
-
-
-	std::set<Identifier> propsChanged;
-
-	for (auto prop : props)
-		if (!state[prop].equals(newState[prop]))
-			propsChanged.insert(prop);
-
-	state = newState;
-
-	for (auto prop : propsChanged)
-		listeners.call(&Listener::optionsChanged, prop);
-
-	state.addListener(this);
+    state.copyPropertiesFrom(newState, nullptr);
 }
 
 juce::Value jcf::AppOptions::getValueObject(const Identifier& identifier)
@@ -88,9 +69,7 @@ void jcf::AppOptions::setDefault(const Identifier& identifier, var defaultValue)
 		setOption(identifier, defaultValue);
 }
 
-jcf::AppOptions::Listener::~Listener()
-{
-}
+jcf::AppOptions::Listener::~Listener() = default;
 
 void jcf::AppOptions::addListener(Listener* listener)
 {
