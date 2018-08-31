@@ -54,6 +54,25 @@ namespace jcf
 #define JCF_ASSERT_THIS_IS_THE_MESSAGE_THREAD {jassert(MessageManager::getInstance()->isThisTheMessageThread());}
     using namespace juce;
 
+    /** 
+     * Use this to own a task and block on destruction until it's complete.
+     */
+    class LightweightThread : public Thread
+    {
+    public:
+        LightweightThread(std::function<void(Thread *)> func, int threadExitTime = 20000) 
+        : 
+        Thread("lc lightweight thread"), func(std::move(func)), threadExitTime(threadExitTime)
+        {
+            startThread(5);
+        }
+
+        ~LightweightThread() { stopThread(threadExitTime); }
+
+        void run () override { func(this); }
+        std::function<void(Thread *)> func;
+        int threadExitTime;
+    };
 
 	class ApplicationActivtyMonitor
 		:
