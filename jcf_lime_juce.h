@@ -74,31 +74,100 @@ namespace jcf
         int threadExitTime;
     };
 
-	class ApplicationActivtyMonitor
-		:
-		public Timer, MouseListener
-	{
-	public:
-		/**
-		timeoutSeconds is the length of time the application has to be in the
-		background or not moving the mouse before we determine the user is
-		not longer using the app.
-		 */
-		ApplicationActivtyMonitor(int timeoutSeconds) : timeout(timeoutSeconds)
-		{
-			startTimer(1000);
-			Desktop::getInstance().addGlobalMouseListener(this);
-		}
+    /**
+     * Like SharedResourcePointer but delays construction of the object until
+     * it's required.  We use this to optimise LookAndFeel creation in plugins
+     * as font loading is slightly slow.
+     */
+    template <typename SharedObjectType>
+    class DelayedSharedResourcePointer
+    {
+    public:
+        DelayedSharedResourcePointer() { initialise(); }
+        DelayedSharedResourcePointer (const DelayedSharedResourcePointer&) { initialise(); }
 
-		~ApplicationActivtyMonitor()
-		{
-			Desktop::getInstance().removeGlobalMouseListener(this);
-		}
+        /**
+         * Destructor.  If no other DelayedSharedResourcePointer objects of this
+         * type exist, this will also delete the shared object to which it refers.
+         */
+        ~DelayedSharedResourcePointer()
+        {
+            auto& holder = getSharedObjectHolder();
+            const SpinLock::ScopedLockType sl (holder.lock);
 
-		void onApplicationBecomesActive(std::function<void()> fun)
-		{
-			applicationNowActiveCallback = fun;
-		}
+            if (--(holder.refCount) == 0)
+                holder.sharedInstance = nullptr;
+        }
+
+        /** Returns the shared object, creating it if it doesn't already exist. */
+        SharedObjectType& get() const
+        {
+            auto& holder = getSharedObjectHolder();
+            const SpinLock::ScopedLockType sl (holder.lock);
+
+            if (holder.sharedInstance == nullptr)
+                holder.sharedInstance = new SharedObjectType();
+
+            return *holder.sharedInstance;
+        }
+
+        /** Returns the number of SharedResourcePointers that are currently holding the shared object. */
+        int getReferenceCount() const noexcept { return getSharedObjectHolder().refCount; }
+
+    private:
+        struct SharedObjectHolder
+        {
+            SpinLock lock;
+            ScopedPointer<SharedObjectType> sharedInstance;
+            int refCount;
+        };
+
+        static SharedObjectHolder& getSharedObjectHolder() noexcept
+        {
+            static void* holder[(sizeof (SharedObjectHolder) + sizeof(void*) - 1) / sizeof(void*)] = { nullptr };
+            return *reinterpret_cast<SharedObjectHolder*> (holder);
+        }
+
+        void initialise()
+        {
+            auto& holder = getSharedObjectHolder();
+            const SpinLock::ScopedLockType sl (holder.lock);
+
+            ++holder.refCount;
+        }
+
+        // There's no need to assign to a SharedResourcePointer because every
+        // instance of the class is exactly the same!
+        DelayedSharedResourcePointer& operator= (const DelayedSharedResourcePointer&) = delete;
+
+        JUCE_LEAK_DETECTOR (DelayedSharedResourcePointer)
+    };
+
+    class ApplicationActivtyMonitor
+        :
+        public Timer, MouseListener
+    {
+    public:
+        /**
+        timeoutSeconds is the length of time the application has to be in the
+        background or not moving the mouse before we determine the user is
+        not longer using the app.
+         */
+        ApplicationActivtyMonitor(int timeoutSeconds) : timeout(timeoutSeconds)
+        {
+            startTimer(1000);
+            Desktop::getInstance().addGlobalMouseListener(this);
+        }
+
+        ~ApplicationActivtyMonitor()
+        {
+            Desktop::getInstance().removeGlobalMouseListener(this);
+        }
+
+        void onApplicationBecomesActive(std::function<void()> fun)
+        {
+            applicationNowActiveCallback = fun;
+        }
 
 		bool isApplicationRecentlyActive() const
 		{
