@@ -51,6 +51,21 @@ public:
 		g.restoreState();
 	}
 
+    /**
+     * Create a mouse cursor from a FontAwesome icon
+     */
+    static MouseCursor getMouseCursor(int iconCode, int size, Point<int> hotspot)
+    {
+        Image image{ Image::PixelFormat::ARGB, size, size, true };
+        Graphics g{ image };
+        auto r = Rectangle<float>{ 0.0f, 0.0f, float(size), float(size) };
+        g.setColour(Colours::black);
+        drawIcon(g, iconCode, r);
+        g.setColour(Colours::white);
+        drawIcon(g, iconCode, r.reduced(2.0f));
+        return MouseCursor(image, hotspot.x, hotspot.y);
+    }
+
   static void drawIconRotated(Graphics & g, int iconCode, const Rectangle<float> & area, float radians)
   {
     g.saveState();
