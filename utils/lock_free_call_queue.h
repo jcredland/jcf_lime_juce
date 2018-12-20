@@ -47,7 +47,7 @@ public:
     /** @brief return true if the queue is empty. */
     bool isEmpty()
     {
-        return fifo.getTotalSize() == fifo.getFreeSpace();
+        return fifo.getTotalSize() == fifo.getFreeSpace() + 1;
     }
 
     /** @brief Return the amount of free space in the queue. 
