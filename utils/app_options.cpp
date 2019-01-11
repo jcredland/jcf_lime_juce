@@ -2,9 +2,9 @@ jcf::AppOptions::AppOptions(const File& file): file(file)
 {
 	lock = new InterProcessLock(file.getFullPathName());
     state = ValueTree{ "state" };
-    state.addListener(this);
 	load();
 	MessageManager::getInstance()->registerBroadcastListener(this);
+    state.addListener(this);
 }
 
 jcf::AppOptions::~AppOptions()
