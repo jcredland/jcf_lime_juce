@@ -363,6 +363,24 @@ namespace jcf
 
 	bool isValidWindowsPathLength(const File& file);
 
+    /**
+    * Find the biggest rectangle of the given aspectRatio which will fit inside the outer.
+    * \param outer will contain the result
+    * \param widthByHeight the aspect ratio of the result calculated by width divided by height
+    */
+    template<typename T>
+    juce::Rectangle<T> getRectangleWithAspectRatio (const juce::Rectangle<T>& outer, float widthByHeight)
+    {
+        // true if height is the defining dimension e.g. the dimension which constrains the result
+        const auto heightConstrains = static_cast<T>(outer.getHeight ()* widthByHeight) < outer.getWidth ();
+
+        if (heightConstrains)
+            return outer.withSizeKeepingCentre (static_cast<T>(outer.getHeight () * widthByHeight), outer.getHeight ());
+
+        return outer.withSizeKeepingCentre (outer.getWidth (), static_cast<T>(outer.getWidth () / widthByHeight));
+    }
+
+
 #include "ui/jcf_font_awesome.h"
 #include "utils/pitch.h"
 #include "crypto/jcf_blowfish_extended.h"
