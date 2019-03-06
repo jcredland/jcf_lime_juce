@@ -269,7 +269,7 @@ namespace jcf
         ScopedPointer<XmlElement> xml = XmlDocument(file.loadFileAsString()).getDocumentElement();
 
         if (!xml)
-            return ValueTree::invalid;
+            return ValueTree{};
 
         auto tree = ValueTree::fromXml(*xml);
         return tree;

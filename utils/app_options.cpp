@@ -52,7 +52,7 @@ void jcf::AppOptions::load()
 
 	auto newState = jcf::loadValueTreeFromXml(file);
 
-    if (newState == ValueTree::invalid)
+    if (newState == ValueTree())
         return;
 
     state.copyPropertiesFrom(newState, nullptr);
