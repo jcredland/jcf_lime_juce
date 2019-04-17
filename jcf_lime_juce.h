@@ -48,8 +48,10 @@ namespace juce
 namespace jcf
 {
 
-#define log_Ctor {std::stringstream s; s << std::hex << int64(this) << " constructed " << typeid(*this).name() << std::endl; DBG(s.str());}
-#define log_Dtor {std::stringstream s; s << std::hex << int64(this) << " deleted " << typeid(*this).name() << std::endl; DBG(s.str());}
+#define JCF_LOG_CONSTRUCTOR {std::stringstream s; s << std::hex << int64(this) << " constructed " << typeid(*this).name() << std::endl; DBG(s.str());}
+#define JCF_LOG_DESTRUCTOR {std::stringstream s; s << std::hex << int64(this) << " deleted " << typeid(*this).name() << std::endl; DBG(s.str());}
+#define log_Ctor JCF_LOG_CONSTRUCTOR
+#define log_Dtor JCF_LOG_DESTRUCTOR
 
 #define JCF_ASSERT_THIS_IS_THE_MESSAGE_THREAD {jassert(MessageManager::getInstance()->isThisTheMessageThread());}
     using namespace juce;
