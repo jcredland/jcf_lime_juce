@@ -28,7 +28,7 @@
 #include <vector>
 #include <set>
 #include <sstream>
-
+#include <iomanip>
 #include <xmmintrin.h>
 
 #ifdef _WIN32
@@ -237,7 +237,38 @@ namespace jcf
 
 		addAndMakeVisibleComponent(parent, args...);
 	}
-
+    
+    template <typename DecimalType>
+    static String toDecimalStringWithSignificantFigures (DecimalType number, int numberOfSignificantFigures)
+    {
+        jassert (numberOfSignificantFigures > 0);
+        
+        if (number == 0)
+        {
+            if (numberOfSignificantFigures > 1)
+            {
+                String result ("0.0");
+                
+                for (int i = 2; i < numberOfSignificantFigures; ++i)
+                    result += "0";
+                
+                return result;
+            }
+            
+            return "0";
+        }
+        
+        auto numDigitsBeforePoint = (int) std::ceil (std::log10 (number < 0 ? -number : number));
+        
+        auto shift = numberOfSignificantFigures - numDigitsBeforePoint;
+        auto factor = std::pow (10.0, shift);
+        auto rounded = std::round (number * factor) / factor;
+        
+        std::stringstream ss;
+        ss << std::fixed << std::setprecision (std::max (shift, 0)) << rounded;
+        return ss.str();
+    }
+    
 	inline String bytesToFormattedString(int64 bytes, int precision)
 	{
 		String prefix;
@@ -257,7 +288,7 @@ namespace jcf
 
 			auto b = double(bytes) / std::pow(1024.0, unitIndex);
 
-			return prefix + String(b, precision) + units[unitIndex];
+			return prefix + toDecimalStringWithSignificantFigures(b, precision) + units[unitIndex];
 		}
 
 		return String(0);
