@@ -1,6 +1,7 @@
 jcf::AppOptions::AppOptions(const File& file): file(file)
 {
-	lock = new InterProcessLock(file.getFullPathName());
+	//lock = new InterProcessLock(file.getFullPathName());
+	lock = std::make_unique<InterProcessLock>(file.getFullPathName());
     state = ValueTree{ "state" };
 	load();
 	MessageManager::getInstance()->registerBroadcastListener(this);

@@ -61,7 +61,11 @@ private:
 
 	File file;
 	std::set<Identifier> identifiersThatChanged;
-	ScopedPointer<InterProcessLock> lock;
+
+	//ScopedPointer<InterProcessLock> lock;
+	
+	std::unique_ptr<InterProcessLock> lock;
+
 	ListenerList<Listener> listeners;
 	int suppressCallback{ 0 };
 

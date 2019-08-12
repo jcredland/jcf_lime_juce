@@ -3,7 +3,9 @@ void StoredCredentials::save() const
 {
 	int keyLen;
 	auto data = keyData->getKeyData(&keyLen);
-	ScopedPointer<BlowfishExtended> blowFish = new BlowfishExtended(data, keyLen);
+	//ScopedPointer<BlowfishExtended> blowFish = new BlowfishExtended(data, keyLen);
+
+	const std::unique_ptr<BlowfishExtended> blowFish = std::make_unique<BlowfishExtended>(data, keyLen);
 
 	ValueTree t{"credentials"};
 	t.setProperty("username", credentials.username, nullptr);
@@ -18,7 +20,9 @@ void StoredCredentials::load()
 {
 	int keyLen;
 	auto data = keyData->getKeyData(&keyLen);
-	ScopedPointer<BlowfishExtended> blowFish = new BlowfishExtended(data, keyLen);
+	//ScopedPointer<BlowfishExtended> blowFish = new BlowfishExtended(data, keyLen);
+
+	const std::unique_ptr<BlowfishExtended> blowFish = std::make_unique<BlowfishExtended>(data, keyLen);
 
 	if (!file.existsAsFile())
 		return;

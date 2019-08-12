@@ -299,7 +299,7 @@ namespace jcf
      */
     inline ValueTree loadValueTreeFromXml(const File & file)
     {
-        ScopedPointer<XmlElement> xml = XmlDocument(file.loadFileAsString()).getDocumentElement();
+        std::unique_ptr<XmlElement> xml = XmlDocument(file.loadFileAsString()).getDocumentElement();
 
         if (xml == nullptr)
             return {};
@@ -338,7 +338,7 @@ namespace jcf
 		}
 
 	private:
-		ScopedPointer<Drawable> d;
+		std::unique_ptr<Drawable> d;
 	};
 	/**
 	* When triggered calls a function no faster than the rate limit.  Calls it immediately if the
