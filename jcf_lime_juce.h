@@ -299,7 +299,7 @@ namespace jcf
      */
     inline ValueTree loadValueTreeFromXml(const File & file)
     {
-        std::unique_ptr<XmlElement> xml = XmlDocument(file.loadFileAsString()).getDocumentElement();
+        std::unique_ptr<XmlElement> xml = std::unique_ptr<XmlElement>(XmlDocument(file.loadFileAsString()).getDocumentElement());
 
         if (xml == nullptr)
             return {};
@@ -323,7 +323,7 @@ namespace jcf
 	class BasicImageComponent : public Component
 	{
 	public:
-		BasicImageComponent(const File & file) { d = Drawable::createFromImageFile(file); }
+        BasicImageComponent(const File & file) { d = std::unique_ptr<Drawable>(Drawable::createFromImageFile(file)); }
 
 		void replaceColour(const Colour & original, const Colour & newColour)
 		{
