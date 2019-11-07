@@ -26,7 +26,7 @@ void jcf::AppOptions::setOption(const Identifier& identifier, var value)
 {
 	auto currentValue = operator[](identifier);
 
-	if (! value.equals(currentValue))
+	if (! state.hasProperty(identifier) || ! value.equals(currentValue))
 		state.setProperty(identifier, value, nullptr);
 }
 
@@ -37,6 +37,7 @@ const juce::var jcf::AppOptions::operator[](const Identifier& identifier) const
 
 void jcf::AppOptions::save()
 {
+    DBG("jcf::AppOptions::save()");
 	{
 		InterProcessLock::ScopedLockType l(*lock);
 		jcf::saveValueTreeToXml(file, state);
@@ -44,11 +45,13 @@ void jcf::AppOptions::save()
 
 	suppressCallback++;
 
-	MessageManager::getInstance()->broadcastMessage(file.getFullPathName());
+	MessageManager::broadcastMessage(file.getFullPathName());
 }
 
 void jcf::AppOptions::load()
 {
+    DBG("jcf::AppOptions::load()");
+
 	InterProcessLock::ScopedLockType l(*lock);
 
 	auto newState = jcf::loadValueTreeFromXml(file);
@@ -89,6 +92,7 @@ void jcf::AppOptions::triggerTimer()
 
 void jcf::AppOptions::timerCallback()
 {
+    DBG("jcf::AppOptions::timerCallback()");
 	stopTimer(); // in case we get a modal loop in listeners.call
 
 	save();
@@ -104,6 +108,7 @@ void jcf::AppOptions::timerCallback()
 
 void jcf::AppOptions::valueTreePropertyChanged(ValueTree&, const Identifier& identifier)
 {
+    DBG("jcf::AppOptions::valueTreePropertyChanged()");
 	triggerTimer();
 	identifiersThatChanged.insert(identifier);
 }
