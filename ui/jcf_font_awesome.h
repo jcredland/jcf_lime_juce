@@ -95,9 +95,9 @@ public:
 	  int iconCode;
   };
   
-  static DrawableText * createDrawable(int iconCode, float height = 20.0f, Colour fgColour = Colours::lightgrey)
+    static std::unique_ptr<DrawableText> createDrawable(int iconCode, float height = 20.0f, Colour fgColour = Colours::lightgrey)
 	{
-		auto d = new DrawableText();
+        auto d = std::make_unique<DrawableText>();
 		d->setColour(fgColour);
 		d->setText(String::charToString(iconCode));
 		d->setFont(Font(getTypeface()).withHeight(height), true);
