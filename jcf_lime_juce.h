@@ -98,7 +98,7 @@ namespace jcf
             const SpinLock::ScopedLockType sl (holder.lock);
 
             if (--(holder.refCount) == 0)
-                holder.sharedInstance = nullptr;
+                holder.sharedInstance.reset();
         }
 
         /** Returns the shared object, creating it if it doesn't already exist. */
@@ -108,7 +108,7 @@ namespace jcf
             const SpinLock::ScopedLockType sl (holder.lock);
 
             if (holder.sharedInstance == nullptr)
-                holder.sharedInstance = new SharedObjectType();
+                holder.sharedInstance.reset( new SharedObjectType() );
 
             return *holder.sharedInstance;
         }
