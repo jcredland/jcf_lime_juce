@@ -120,7 +120,7 @@ namespace jcf
         struct SharedObjectHolder
         {
             SpinLock lock;
-            ScopedPointer<SharedObjectType> sharedInstance;
+            std::unique_ptr<SharedObjectType> sharedInstance;
             int refCount;
         };
 
@@ -237,6 +237,20 @@ namespace jcf
 
 		addAndMakeVisibleComponent(parent, args...);
 	}
+    
+    template <typename ComponentType>
+    void addAndMakeVisibleComponent(Component * parent, std::unique_ptr<ComponentType> & comp)
+    {
+        parent->addAndMakeVisible(comp.get());
+    }
+    
+    template<typename ComponentType, typename... Args>
+    void addAndMakeVisibleComponent(Component * parent, std::unique_ptr<ComponentType> & comp, Args&... args)
+    {
+        parent->addAndMakeVisible(comp.get());
+        
+        addAndMakeVisibleComponent(parent, args...);
+    }
     
     template <typename DecimalType>
     static String toDecimalStringWithSignificantFigures (DecimalType number, int numberOfSignificantFigures)
