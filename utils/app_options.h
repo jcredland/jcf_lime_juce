@@ -31,6 +31,13 @@ public:
 	*/
 	void setDefault(const Identifier& identifier, var defaultValue);
 
+	/**
+	 * used for when the list of allowable options may have changed.
+	 * applies the given default value if the option is set to a value that is not in the permitted list
+	 * Note, this ignores the type of the current option value so a possible permittedList value of "123" will allow an option value of int(123)
+	 */
+	void setDefaultAndRestrictToPermittedList(const Identifier& identifier, const Array<var>& permittedList, var defaultValue);
+	
 	class Listener
 	{
 	public:

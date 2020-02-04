@@ -73,6 +73,28 @@ void jcf::AppOptions::setDefault(const Identifier& identifier, var defaultValue)
 		setOption(identifier, defaultValue);
 }
 
+void jcf::AppOptions::setDefaultAndRestrictToPermittedList(const Identifier& identifier, const Array<var>& permittedList, var defaultValue)
+{
+	if (!state.hasProperty(identifier))
+	{
+		setOption(identifier, defaultValue);
+		return;
+	}
+
+	const auto currentValue = state.getProperty(identifier);
+	
+	for(auto option: permittedList)
+	{
+		if(currentValue.equals (option))
+		{
+			// we match one of the possible options, potentially with a different type e.g "123"==123
+			return;
+		}
+	}
+
+	setOption(identifier, defaultValue);
+}
+
 jcf::AppOptions::Listener::~Listener() = default;
 
 void jcf::AppOptions::addListener(Listener* listener)
