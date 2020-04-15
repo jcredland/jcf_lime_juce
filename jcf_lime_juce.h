@@ -1,4 +1,4 @@
-#pragma once
+
 
 /*
  
@@ -29,7 +29,6 @@
 #include <set>
 #include <sstream>
 #include <iomanip>
-#include <xmmintrin.h>
 
 #ifdef _WIN32
 #define EXPLORER_OR_FINDER "Explorer"
@@ -209,20 +208,6 @@ namespace jcf
 	};
 
 
-	class ScopedNoDenormals
-	{
-	public:
-		ScopedNoDenormals()
-		{
-			oldMXCSR = _mm_getcsr();
-			int newMXCSR = oldMXCSR | 0x8040;
-			_mm_setcsr(newMXCSR);
-		};
-
-		~ScopedNoDenormals() { _mm_setcsr(oldMXCSR); };
-
-		int oldMXCSR;
-	};
 
 	template <typename ComponentType>
 	void addAndMakeVisibleComponent(Component * parent, ComponentType & comp)
