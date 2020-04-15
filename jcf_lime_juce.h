@@ -1,4 +1,4 @@
-
+#pragma once
 
 /*
  
@@ -38,10 +38,10 @@
 
 namespace juce
 {
-	inline bool operator<(const Identifier &a, const Identifier & b)
-	{
-		return a.toString() < b.toString();
-	}
+    inline bool operator<(const Identifier &a, const Identifier & b)
+    {
+        return a.toString() < b.toString();
+    }
 }
 
 namespace jcf
