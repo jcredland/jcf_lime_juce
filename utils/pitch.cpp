@@ -11,7 +11,7 @@ int Pitch::getNearestMidiNote() const
 
 int Pitch::getErrorInCents() const
 {
-	return int(std::abs(std::round(100.0 * (getMidiNote() - double(getNearestMidiNote())))));
+	return int(std::round(100.0 * (getMidiNote() - double(getNearestMidiNote()))));
 }
 
 String Pitch::getMidiNoteAsString(int midinote)
