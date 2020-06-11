@@ -331,6 +331,8 @@ namespace jcf
 		{
 
 		}
+        
+        virtual ~ArraySaver() {}
 
 		virtual ValueTree serialize(const T & item) = 0;
 
