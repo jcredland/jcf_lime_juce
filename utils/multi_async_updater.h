@@ -8,7 +8,7 @@ public:
 	MultiAsyncUpdater()
 	{}
 
-	// pass by value is more efficent where the std::function will be created in place 
+	// pass by value is more efficient where the std::function will be created in place
 	// from a lambda.  See http://stackoverflow.com/questions/18365532/should-i-pass-an-stdfunction-by-const-reference
 	void callOnMessageThread(std::function<void()> callback)
 	{
