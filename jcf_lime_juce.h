@@ -363,6 +363,11 @@ namespace jcf
 	{
 	public:
 		RateLimitedCallback(std::function<void()> function, int rateLimitMilliSeconds) : function(function), rateLimitMilliSeconds(rateLimitMilliSeconds) {}
+        
+        ~RateLimitedCallback()
+        {
+            stopTimer();
+        }
 
 		void trigger()
 		{
