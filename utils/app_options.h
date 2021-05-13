@@ -73,7 +73,7 @@ private:
 	
 	std::unique_ptr<InterProcessLock> lock;
 
-	ListenerList<Listener> listeners;
+	ListenerList<Listener, Array<Listener*, CriticalSection>> listeners;
 	int suppressCallback{ 0 };
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AppOptions)
