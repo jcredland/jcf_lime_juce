@@ -45,7 +45,8 @@ void jcf::AppOptions::save()
 
 	suppressCallback++;
 
-	MessageManager::broadcastMessage(file.getFullPathName());
+    if (MessageManager::getInstanceWithoutCreating() != nullptr) // check to avoid a barely comprehensible crash on some shutdowns
+        MessageManager::broadcastMessage(file.getFullPathName());
 }
 
 void jcf::AppOptions::load()

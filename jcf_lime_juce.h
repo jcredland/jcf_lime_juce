@@ -29,7 +29,6 @@
 #include <set>
 #include <sstream>
 #include <iomanip>
-#include <xmmintrin.h>
 
 #ifdef _WIN32
 #define EXPLORER_OR_FINDER "Explorer"
@@ -39,10 +38,10 @@
 
 namespace juce
 {
-	inline bool operator<(const Identifier &a, const Identifier & b)
-	{
-		return a.toString() < b.toString();
-	}
+    inline bool operator<(const Identifier &a, const Identifier & b)
+    {
+        return a.toString() < b.toString();
+    }
 }
 
 namespace jcf
@@ -209,20 +208,6 @@ namespace jcf
 	};
 
 
-	class ScopedNoDenormals
-	{
-	public:
-		ScopedNoDenormals()
-		{
-			oldMXCSR = _mm_getcsr();
-			int newMXCSR = oldMXCSR | 0x8040;
-			_mm_setcsr(newMXCSR);
-		};
-
-		~ScopedNoDenormals() { _mm_setcsr(oldMXCSR); };
-
-		int oldMXCSR;
-	};
 
 	template <typename ComponentType>
 	void addAndMakeVisibleComponent(Component * parent, ComponentType & comp)
@@ -332,6 +317,84 @@ namespace jcf
 
         return Result::ok();
     }
+
+
+	/** Saves a JUCE Array<> object in a binary ValueTree format */
+	template<class T>
+	class ArraySaver
+	{
+	public:
+		ArraySaver(const File & saveFile, const Identifier & identifier)
+				:
+				identifier(identifier),
+				saveFile(saveFile)
+		{
+
+		}
+        
+        virtual ~ArraySaver() {}
+
+		virtual ValueTree serialize(const T & item) = 0;
+
+		virtual T deserialize(const ValueTree & t) = 0;
+
+		Result write(const Array<T> & x)
+		{
+			ValueTree t{ identifier };
+
+			for (auto & e : x)
+				t.addChild(serialize(e), -1, nullptr);
+
+            saveFile.deleteFile();
+            
+			auto o = std::unique_ptr<OutputStream>(saveFile.createOutputStream());
+
+			if (o == nullptr)
+				return Result::fail("could not write to " + saveFile.getFullPathName());
+
+			t.writeToStream(*o);
+
+			return Result::ok();
+		}
+
+		bool removeItem(const T & item)
+		{
+			auto [r, a] = read();
+
+			if (r.isNotEmpty())
+				return false;
+
+			a.removeAllInstancesOf(item);
+
+			return write(a).wasOk();
+		}
+
+		/**
+		 * @returns an error string or the loaded array
+		 */
+		std::pair<String, juce::Array<T>> read()
+		{
+			auto i = std::unique_ptr<InputStream>(saveFile.createInputStream());
+
+			if (i == nullptr)
+				return { "could not open " + saveFile.getFullPathName(), Array<T>{} };
+
+			auto t = ValueTree::readFromStream(*i);
+
+			if (t.getType() != identifier)
+				return { "wrong format " + saveFile.getFullPathName(), Array<T>{} };
+
+			juce::Array<T> result;
+
+			for (auto child : t)
+				result.add(deserialize(child));
+
+			return { {}, result };
+		}
+
+		Identifier identifier;
+		File saveFile;
+	};
 
 	/** A very simple SVG or PNG rendering component */
 	class BasicImageComponent : public Component

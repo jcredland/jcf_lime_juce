@@ -11,7 +11,7 @@ int Pitch::getNearestMidiNote() const
 
 int Pitch::getErrorInCents() const
 {
-	return int(std::abs(std::round(100.0 * (getMidiNote() - double(getNearestMidiNote())))));
+	return int(std::round(100.0 * (getMidiNote() - double(getNearestMidiNote()))));
 }
 
 String Pitch::getMidiNoteAsString(int midinote)
@@ -20,7 +20,7 @@ String Pitch::getMidiNoteAsString(int midinote)
 	int notenumber = midinote % 12;
 	int octave = (midinote / 12) - offsetMiddleC; // Octave numbers are somewhat non-standard, one man's C3 is another man's C5.
 
-	return String(notes[notenumber]) + String(octave);
+    return String(notes[std::abs(notenumber)]) + String(octave);
 }
 
 int Pitch::getOctaveNumber() const
