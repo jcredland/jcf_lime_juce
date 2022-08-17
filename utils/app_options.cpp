@@ -131,7 +131,7 @@ void jcf::AppOptions::timerCallback()
 
 void jcf::AppOptions::valueTreePropertyChanged(ValueTree&, const Identifier& identifier)
 {
-    DBG("jcf::AppOptions::valueTreePropertyChanged()");
+    DBG("jcf::AppOptions::valueTreePropertyChanged() " + identifier);
 	triggerTimer();
 	identifiersThatChanged.insert(identifier);
 }
