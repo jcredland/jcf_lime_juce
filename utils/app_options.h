@@ -68,6 +68,7 @@ private:
 
 	File file;
 	std::set<Identifier> identifiersThatChanged;
+    bool preventTriggeringSave{};
 
 	//ScopedPointer<InterProcessLock> lock;
 	

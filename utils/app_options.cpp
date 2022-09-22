@@ -60,7 +60,10 @@ void jcf::AppOptions::load()
     if (! newState.isValid())
         return;
 
+    preventTriggeringSave = true;
     state.copyPropertiesFrom(newState, nullptr);
+    preventTriggeringSave = false;
+    
 }
 
 juce::Value jcf::AppOptions::getValueObject(const Identifier& identifier)
@@ -110,7 +113,8 @@ void jcf::AppOptions::removeListener(Listener* listener)
 
 void jcf::AppOptions::triggerTimer()
 {
-	startTimer(1000);
+    if (! preventTriggeringSave)
+        startTimer(1000);
 }
 
 void jcf::AppOptions::timerCallback()
