@@ -65,7 +65,7 @@ namespace jcf
         : 
         Thread("lc lightweight thread"), func(std::move(func)), threadExitTime(threadExitTime)
         {
-            startThread(5);
+            startThread(Priority::normal);
         }
 
         ~LightweightThread() { stopThread(threadExitTime); }
