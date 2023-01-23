@@ -65,7 +65,7 @@ namespace jcf
         : 
         Thread("lc lightweight thread"), func(std::move(func)), threadExitTime(threadExitTime)
         {
-            startThread(5);
+            startThread(Priority::normal);
         }
 
         ~LightweightThread() { stopThread(threadExitTime); }
@@ -426,6 +426,11 @@ namespace jcf
 	{
 	public:
 		RateLimitedCallback(std::function<void()> function, int rateLimitMilliSeconds) : function(function), rateLimitMilliSeconds(rateLimitMilliSeconds) {}
+        
+        ~RateLimitedCallback()
+        {
+            stopTimer();
+        }
 
 		void trigger()
 		{
