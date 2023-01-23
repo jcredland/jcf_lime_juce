@@ -24,6 +24,8 @@ void jcf::AppOptions::actionListenerCallback(const String& message)
 
 void jcf::AppOptions::setOption(const Identifier& identifier, var value)
 {
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	auto currentValue = operator[](identifier);
 
 	if (! state.hasProperty(identifier) || ! value.equals(currentValue))
@@ -32,12 +34,16 @@ void jcf::AppOptions::setOption(const Identifier& identifier, var value)
 
 const juce::var jcf::AppOptions::operator[](const Identifier& identifier) const
 {
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	return state[identifier];
 }
 
 void jcf::AppOptions::save()
 {
     DBG("jcf::AppOptions::save()");
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	{
 		InterProcessLock::ScopedLockType l(*lock);
 		jcf::saveValueTreeToXml(file, state);
@@ -52,6 +58,8 @@ void jcf::AppOptions::save()
 void jcf::AppOptions::load()
 {
     DBG("jcf::AppOptions::load()");
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 
 	InterProcessLock::ScopedLockType l(*lock);
 
@@ -65,17 +73,23 @@ void jcf::AppOptions::load()
 
 juce::Value jcf::AppOptions::getValueObject(const Identifier& identifier)
 {
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	return state.getPropertyAsValue(identifier, nullptr);
 }
 
 void jcf::AppOptions::setDefault(const Identifier& identifier, var defaultValue)
 {
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	if (!state.hasProperty(identifier))
 		setOption(identifier, defaultValue);
 }
 
 void jcf::AppOptions::setDefaultAndRestrictToPermittedList(const Identifier& identifier, const Array<var>& permittedList, var defaultValue)
 {
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	if (!state.hasProperty(identifier))
 	{
 		setOption(identifier, defaultValue);
@@ -100,11 +114,15 @@ jcf::AppOptions::Listener::~Listener() = default;
 
 void jcf::AppOptions::addListener(Listener* listener)
 {
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	listeners.add(listener);
 }
 
 void jcf::AppOptions::removeListener(Listener* listener)
 {
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	listeners.remove(listener);
 }
 
@@ -132,6 +150,8 @@ void jcf::AppOptions::timerCallback()
 void jcf::AppOptions::valueTreePropertyChanged(ValueTree&, const Identifier& identifier)
 {
     DBG("jcf::AppOptions::valueTreePropertyChanged()");
+	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
 	triggerTimer();
 	identifiersThatChanged.insert(identifier);
 }
