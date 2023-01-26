@@ -42,7 +42,8 @@ const juce::var jcf::AppOptions::operator[](const Identifier& identifier) const
 void jcf::AppOptions::save()
 {
     DBG("jcf::AppOptions::save()");
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
+	jassert(juce::MessageManager::getInstanceWithoutCreating() == nullptr || MessageManager::getInstance()->currentThreadHasLockedMessageManager());
 
 	{
 		InterProcessLock::ScopedLockType l(*lock);
