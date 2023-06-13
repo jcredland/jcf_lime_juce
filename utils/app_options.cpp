@@ -1,11 +1,82 @@
+
+/**
+ * Allows use to provide Value objects for use on the message thread without invaliding our threadsafety by
+ * modifying the ValueTree on the message thread.
+ */
+class AppOptions::ThreadSafeValueProxy : public Value::Listener, public AppOptions::Listener
+{
+public:
+	ThreadSafeValueProxy (AppOptions& appOptions_) : appOptions (appOptions_) { appOptions.addListener (this); }
+
+	~ThreadSafeValueProxy() override { appOptions.removeListener (this); }
+
+	Value getOrCreateValueObject (const Identifier& id)
+	{
+		JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+
+		for (auto& x : values)
+		{
+			if (x->id == id)
+				return x->value;
+		}
+
+		// we didn't find the value in our list
+
+		auto obj = std::make_unique<Record> (id, Value (appOptions[id]));
+		obj->value.addListener (this);
+		values.push_back (std::move (obj));
+
+		return values.back()->value;
+	}
+
+	void optionsChanged(const Identifier &identifierThatChanged) override
+	{
+		for (auto& x : values)
+		{
+			if (x->id == identifierThatChanged)
+			{
+				x->value = appOptions[identifierThatChanged];
+				return;
+			}
+		}
+	}
+
+	void valueChanged (Value& value) override
+	{
+		for (auto& x : values)
+		{
+			if (x->value.refersToSameSourceAs (value))
+			{
+				appOptions.setOption (x->id, value.getValue());
+				return;
+			}
+		}
+
+		// we didn't find the value in our list
+		jassertfalse;
+	}
+
+	struct Record
+	{
+		Record (Identifier id_, Value value_) : id (id_), value (value_) {}
+		Identifier id;
+		Value value;
+	};
+
+	std::vector<std::unique_ptr<Record>> values;
+	AppOptions& appOptions;
+};
+
 jcf::AppOptions::AppOptions(const File& file): file(file)
 {
 	//lock = new InterProcessLock(file.getFullPathName());
 	lock = std::make_unique<InterProcessLock>(file.getFullPathName());
-    state = ValueTree{ "state" };
+	state = ValueTree{ "state" };
 	load();
 	MessageManager::getInstance()->registerBroadcastListener(this);
-    state.addListener(this);
+	state.addListener(this);
+
+	valueProxy = std::make_unique<ThreadSafeValueProxy>(*this);
 }
 
 jcf::AppOptions::~AppOptions()
@@ -24,7 +95,7 @@ void jcf::AppOptions::actionListenerCallback(const String& message)
 
 void jcf::AppOptions::setOption(const Identifier& identifier, var value)
 {
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+	ScopedLock lock{ stateLock };
 
 	auto currentValue = operator[](identifier);
 
@@ -34,7 +105,7 @@ void jcf::AppOptions::setOption(const Identifier& identifier, var value)
 
 const juce::var jcf::AppOptions::operator[](const Identifier& identifier) const
 {
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+	ScopedLock lock{ stateLock };
 
 	return state[identifier];
 }
@@ -43,10 +114,9 @@ void jcf::AppOptions::save()
 {
     DBG("jcf::AppOptions::save()");
 
-	jassert(juce::MessageManager::getInstanceWithoutCreating() == nullptr || MessageManager::getInstance()->currentThreadHasLockedMessageManager());
-
 	{
 		InterProcessLock::ScopedLockType l(*lock);
+		ScopedLock l0{ stateLock };
 		jcf::saveValueTreeToXml(file, state);
 	}
 
@@ -58,9 +128,8 @@ void jcf::AppOptions::save()
 
 void jcf::AppOptions::load()
 {
-    DBG("jcf::AppOptions::load()");
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
 
+	DBG("jcf::AppOptions::load()");
 
 	InterProcessLock::ScopedLockType l(*lock);
 
@@ -69,22 +138,23 @@ void jcf::AppOptions::load()
     if (! newState.isValid())
         return;
 
-    preventTriggeringSave = true;
-    state.copyPropertiesFrom(newState, nullptr);
-    preventTriggeringSave = false;
-    
+    {
+        ScopedLock lock{ stateLock };
+        preventTriggeringSave = true;
+        state.copyPropertiesFrom (newState, nullptr);
+        preventTriggeringSave = false;
+    }
 }
 
 juce::Value jcf::AppOptions::getValueObject(const Identifier& identifier)
 {
 	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
-
-	return state.getPropertyAsValue(identifier, nullptr);
+	return valueProxy->getOrCreateValueObject (identifier);
 }
 
 void jcf::AppOptions::setDefault(const Identifier& identifier, var defaultValue)
 {
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+	ScopedLock lock{ stateLock };
 
 	if (!state.hasProperty(identifier))
 		setOption(identifier, defaultValue);
@@ -92,7 +162,7 @@ void jcf::AppOptions::setDefault(const Identifier& identifier, var defaultValue)
 
 void jcf::AppOptions::setDefaultAndRestrictToPermittedList(const Identifier& identifier, const Array<var>& permittedList, var defaultValue)
 {
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+	ScopedLock lock{ stateLock };
 
 	if (!state.hasProperty(identifier))
 	{
@@ -101,32 +171,28 @@ void jcf::AppOptions::setDefaultAndRestrictToPermittedList(const Identifier& ide
 	}
 
 	const auto currentValue = state.getProperty(identifier);
-	
-	for(auto option: permittedList)
-	{
-		if(currentValue.equals (option))
-		{
-			// we match one of the possible options, potentially with a different type e.g "123"==123
-			return;
-		}
-	}
 
-	setOption(identifier, defaultValue);
+    for (auto option : permittedList)
+    {
+        if (currentValue.equals (option))
+        {
+            // we match one of the possible options, potentially with a different type e.g "123"==123
+            return;
+        }
+    }
+
+    setOption(identifier, defaultValue);
 }
 
 jcf::AppOptions::Listener::~Listener() = default;
 
 void jcf::AppOptions::addListener(Listener* listener)
 {
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
-
 	listeners.add(listener);
 }
 
 void jcf::AppOptions::removeListener(Listener* listener)
 {
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
-
 	listeners.remove(listener);
 }
 
@@ -138,23 +204,29 @@ void jcf::AppOptions::triggerTimer()
 
 void jcf::AppOptions::timerCallback()
 {
-    DBG("jcf::AppOptions::timerCallback()");
+	std::set<Identifier> copyOfIds;
+
+	{
+		ScopedLock lock{ stateLock };
+		copyOfIds = identifiersThatChanged;
+		identifiersThatChanged.clear();
+	}
+
+ 	DBG("jcf::AppOptions::timerCallback()");
 	stopTimer(); // in case we get a modal loop in listeners.call
 
 	save();
 
-	for (auto & i : identifiersThatChanged)
+	for (auto & i : copyOfIds)
 		listeners.call(&Listener::optionsChangedEarlyCallback, i);
 
-	for (auto & i : identifiersThatChanged)
+	for (auto & i : copyOfIds)
 		listeners.call(&Listener::optionsChanged, i);
-
-	identifiersThatChanged.clear();
 }
 
 void jcf::AppOptions::valueTreePropertyChanged(ValueTree&, const Identifier& identifier)
 {
-	JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
+	ScopedLock lock{ stateLock };
 
 	DBG("jcf::AppOptions::valueTreePropertyChanged() " + identifier);
 	triggerTimer();

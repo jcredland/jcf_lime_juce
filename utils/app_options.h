@@ -54,6 +54,7 @@ private:
     /** This was formerly public, but there's a massive issue with loading
      * preferences if we have Value objects based on properties. */
 	ValueTree state;
+	CriticalSection stateLock;
 
 	void triggerTimer();
 
@@ -70,12 +71,17 @@ private:
 	std::set<Identifier> identifiersThatChanged;
     bool preventTriggeringSave{};
 
-	//ScopedPointer<InterProcessLock> lock;
-	
+
+	class ThreadSafeValueProxy;
+    //ScopedPointer<InterProcessLock> lock;
+
+
 	std::unique_ptr<InterProcessLock> lock;
 
 	ListenerList<Listener, Array<Listener*, CriticalSection>> listeners;
 	int suppressCallback{ 0 };
+
+	std::unique_ptr<ThreadSafeValueProxy> valueProxy;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AppOptions)
 };
