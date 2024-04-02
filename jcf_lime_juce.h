@@ -422,7 +422,11 @@ public:
     {
     }
 
-    ~RateLimitedCallback() { stopTimer(); }
+    ~RateLimitedCallback()
+    {
+        stopTimer();
+        JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED; // async updater
+    }
 
     void trigger() { triggerAsyncUpdate(); }
 

@@ -8,7 +8,12 @@ public:
 	MultiAsyncUpdater()
 	{}
 
-	// pass by value is more efficient where the std::function will be created in place
+    ~MultiAsyncUpdater()
+    {
+        JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED; // async updater
+    }
+
+    // pass by value is more efficient where the std::function will be created in place
 	// from a lambda.  See http://stackoverflow.com/questions/18365532/should-i-pass-an-stdfunction-by-const-reference
 	void callOnMessageThread(std::function<void()> callback)
 	{
