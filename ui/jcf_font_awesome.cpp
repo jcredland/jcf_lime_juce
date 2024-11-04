@@ -8,6 +8,80 @@
   ==============================================================================
 */
 
+#include "jcf_font_awesome.h"
+#include <juce_gui_basics/juce_gui_basics.h>
+
+namespace jcf
+{
+
+using namespace juce;
+
+Typeface::Ptr FontAwesomeIcons::getTypeface()
+{
+    static Typeface::Ptr typeface = Typeface::createSystemTypefaceFor (FontAwesomeData::FontAwesome_otf, FontAwesomeData::FontAwesome_otfSize);
+    return typeface;
+}
+
+void FontAwesomeIcons::drawIcon (Graphics& g, int iconCode, const Rectangle<float>& area)
+{
+    g.saveState();
+    g.setFont (Font (getTypeface()).withHeight (area.getHeight()));
+    g.drawText (String::charToString (iconCode), area, Justification::centred, false);
+    g.restoreState();
+}
+
+MouseCursor FontAwesomeIcons::getMouseCursor (int iconCode, int size, Point<int> hotspot)
+{
+    Image image{ Image::PixelFormat::ARGB, size, size, true };
+    Graphics g{ image };
+    auto r = Rectangle<float>{ 0.0f, 0.0f, float (size), float (size) };
+    g.setColour (Colours::black);
+    drawIcon (g, iconCode, r);
+    g.setColour (Colours::white);
+    drawIcon (g, iconCode, r.reduced (2.0f));
+    return MouseCursor (image, hotspot.x, hotspot.y);
+}
+
+void FontAwesomeIcons::drawIconRotated (Graphics& g, int iconCode, const Rectangle<float>& area, float radians)
+{
+    g.saveState();
+
+    GlyphArrangement icon;
+    icon.addFittedText (Font (getTypeface()).withHeight (area.getHeight()),
+                        String::charToString (iconCode),
+                        area.getX(),
+                        area.getY(),
+                        area.getWidth(),
+                        area.getHeight(),
+                        Justification::centred,
+                        1);
+
+    icon.draw (g, AffineTransform::rotation (radians, area.getCentreX(), area.getCentreY()));
+    g.restoreState();
+}
+
+FontAwesomeIcons::IconComponent::IconComponent (int iconCode, const Colour& colour) : colour (colour), iconCode (iconCode) {}
+
+void FontAwesomeIcons::IconComponent::paint (Graphics& g)
+{
+    g.setColour (colour);
+    drawIcon (g, iconCode, getLocalBounds().toFloat());
+}
+
+std::unique_ptr<DrawableText> FontAwesomeIcons::createDrawable (int iconCode, float height, Colour fgColour)
+{
+    auto d = std::make_unique<DrawableText>();
+    d->setColour (fgColour);
+    d->setText (String::charToString (iconCode));
+    d->setFont (Font (getTypeface()).withHeight (height), true);
+    d->setJustification (Justification::centred);
+#if JUCE_MAJOR_VERSION > 4
+    d->setBoundingBox (Parallelogram<float> (Rectangle<float> (0.0f, 0.0f, 20.0f, 20.0f)));
+#else
+    d->setBoundingBox (RelativeParallelogram (Rectangle<float> (0.0f, 0.0f, 20.0f, 20.0f)));
+#endif
+    return d;
+}
 
 static const unsigned char temp1[] = { 79,84,84,79,0,9,0,128,0,3,0,16,67,70,70,32,196,228,76,156,0,0,18,16,0,1,141,4,79,83,47,50,136,50,122,82,0,0,1,0,
 0,0,0,96,99,109,97,112,33,119,194,79,0,0,5,128,0,0,2,236,104,101,97,100,5,72,235,73,0,0,0,156,0,0,0,54,104,104,101,97,
@@ -2668,3 +2742,4 @@ static const unsigned char temp1[] = { 79,84,84,79,0,9,0,128,0,3,0,16,67,70,70,3
 11,247,130,29,14,182,192,192,182,11,28,251,64,6,11,247,20,6,174,11,0,0 };
 const char* FontAwesomeData::FontAwesome_otf = (const char*)temp1;
 
+} // namespace jcf

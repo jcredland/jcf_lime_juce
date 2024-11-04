@@ -1,12 +1,13 @@
 #pragma once
+#include <juce_core/juce_core.h>
+#include <juce_events/juce_events.h>
 
-class MultiAsyncUpdater
-	:
-	AsyncUpdater
+namespace jcf
+{
+class MultiAsyncUpdater : juce::AsyncUpdater
 {
 public:
-	MultiAsyncUpdater()
-	{}
+    MultiAsyncUpdater() = default;
 
     ~MultiAsyncUpdater()
     {
@@ -17,10 +18,10 @@ public:
 	// from a lambda.  See http://stackoverflow.com/questions/18365532/should-i-pass-an-stdfunction-by-const-reference
 	void callOnMessageThread(std::function<void()> callback)
 	{
-		ScopedLock l(lock);
-		queue.push_back(std::move(callback));
-		triggerAsyncUpdate();
-	}
+        juce::ScopedLock l (lock);
+        queue.push_back (std::move (callback));
+        triggerAsyncUpdate();
+    }
 
 private:
 	void handleAsyncUpdate() override
@@ -31,10 +32,11 @@ private:
 		lock.exit();
 
 		for (auto & func : queueCopy)
-			func();
-	}
+            func();
+    }
 
-	CriticalSection lock;
-	std::vector<std::function<void()>> queue;
+    juce::CriticalSection lock;
+    std::vector<std::function<void()>> queue;
 };
 
+} // namespace jcf

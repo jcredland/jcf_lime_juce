@@ -1,4 +1,12 @@
 
+#pragma once
+#include <juce_core/juce_core.h>
+#include <juce_data_structures/juce_data_structures.h>
+
+namespace juce {
+class BlowFish; }
+namespace jcf
+{
 /**
 Provides an easier to use interface for JUCE Blowfish.
 
@@ -23,24 +31,24 @@ public:
 	BlowfishExtended(const void* keyData, int keyBytes);
 
 	/** Encrypt a ValueTree with blowfish */
-	MemoryBlock encrypt(const ValueTree& data) const;
+	juce::MemoryBlock encrypt(const juce::ValueTree& data) const;
 
 	/** Encrypt a string with blowfish */
-	MemoryBlock encrypt(const String& string) const;
+	juce::MemoryBlock encrypt(const juce::String& string) const;
 
 	/** Note that this will modify the original memory block in the process of decrypting. */
-	Result decrypt(MemoryBlock& source, ValueTree& resultingTree) const;
+	juce::Result decrypt(juce::MemoryBlock& source, juce::ValueTree& resultingTree) const;
 
 	/** Decrypts a memory block to a string.  */
-	Result decrypt(MemoryBlock& source, String& resultingString) const;
+	juce::Result decrypt(juce::MemoryBlock& source, juce::String& resultingString) const;
 
 	/** 
 	 Base function used by encrypt.  Can be used to encrypt a MemoryBlock if you 
 	 happen to need to for some reason. 
 	*/
-	void encryptMemoryBlock(MemoryBlock& memoryBlock) const;
+	void encryptMemoryBlock(juce::MemoryBlock& memoryBlock) const;
 
-	Result decryptMemoryBlock(MemoryBlock& memoryBlock) const;
+	juce::Result decryptMemoryBlock(juce::MemoryBlock& memoryBlock) const;
 
 	/**
 	Add PCKS5 padding to make data of arbitrary length up to an 8 byte boundary.
@@ -49,19 +57,21 @@ public:
 
 	See specification: https://tools.ietf.org/html/rfc2898#section-6.1.1 
 	*/
-	static void addPaddingPKCS5(MemoryBlock& memoryBlock);
+	static void addPaddingPKCS5(juce::MemoryBlock& memoryBlock);
 
 	/**
 	Removes PCKS5 padding from a memory block.
 
 	Returns false if the data is invalid, too short or appears not to be PKCS 5 padding.
 	*/
-	static bool removePaddingPKCS5(MemoryBlock& memoryBlock);
+	static bool removePaddingPKCS5(juce::MemoryBlock& memoryBlock);
 
 	/** Utility function to add a string to a memory block */
-	static void appendStringToMemoryBlock(const String& string, MemoryBlock& memoryBlock);
+	static void appendStringToMemoryBlock(const juce::String& string, juce::MemoryBlock& memoryBlock);
 private:
-	BlowFish blowFish;
+	std::unique_ptr<juce::BlowFish> blowFish;
 };
 
 
+
+}
