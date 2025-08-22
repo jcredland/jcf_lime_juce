@@ -25,7 +25,11 @@ Typeface::Ptr FontAwesomeIcons::getTypeface()
 void FontAwesomeIcons::drawIcon (Graphics& g, int iconCode, const Rectangle<float>& area)
 {
     g.saveState();
+#if JUCE_MAJOR_VERSION >= 8
+    g.setFont (Font (FontOptions(getTypeface()).withHeight (area.getHeight())));
+#else
     g.setFont (Font (getTypeface()).withHeight (area.getHeight()));
+#endif
     g.drawText (String::charToString (iconCode), area, Justification::centred, false);
     g.restoreState();
 }
@@ -47,7 +51,11 @@ void FontAwesomeIcons::drawIconRotated (Graphics& g, int iconCode, const Rectang
     g.saveState();
 
     GlyphArrangement icon;
+#if JUCE_MAJOR_VERSION >= 8
+    icon.addFittedText (Font (FontOptions().withTypeface(getTypeface())).withHeight (area.getHeight()),
+#else
     icon.addFittedText (Font (getTypeface()).withHeight (area.getHeight()),
+#endif
                         String::charToString (iconCode),
                         area.getX(),
                         area.getY(),
@@ -73,7 +81,11 @@ std::unique_ptr<DrawableText> FontAwesomeIcons::createDrawable (int iconCode, fl
     auto d = std::make_unique<DrawableText>();
     d->setColour (fgColour);
     d->setText (String::charToString (iconCode));
+#if JUCE_MAJOR_VERSION >= 8
+    d->setFont (Font (FontOptions().withTypeface(getTypeface())).withHeight (height), true);
+#else
     d->setFont (Font (getTypeface()).withHeight (height), true);
+#endif
     d->setJustification (Justification::centred);
 #if JUCE_MAJOR_VERSION > 4
     d->setBoundingBox (Parallelogram<float> (Rectangle<float> (0.0f, 0.0f, 20.0f, 20.0f)));
