@@ -12,7 +12,7 @@ namespace jcf
 class AppOptions : public juce::ValueTree::Listener, juce::Timer, juce::ActionListener
 {
 public:
-    explicit AppOptions (const juce::File& file);
+	explicit AppOptions(const juce::File& file, bool readonly = false);
 
     ~AppOptions();
 
@@ -72,6 +72,7 @@ private:
     void valueTreeChildOrderChanged (juce::ValueTree&, int, int) override;
     void valueTreeParentChanged (juce::ValueTree&) override;
 
+    bool readOnly{ false };
     juce::File file;
     std::set<juce::Identifier> identifiersThatChanged;
     bool preventTriggeringSave{};

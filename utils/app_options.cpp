@@ -70,7 +70,7 @@ public:
     AppOptions& appOptions;
 };
 
-jcf::AppOptions::AppOptions(const File& file): file(file)
+jcf::AppOptions::AppOptions(const File& file, bool readOnly): file(file), readOnly (readOnly)
 {
     // lock = new InterProcessLock(file.getFullPathName());
     lock = std::make_unique<InterProcessLock> (file.getFullPathName());
@@ -115,6 +115,12 @@ const juce::var jcf::AppOptions::operator[](const Identifier& identifier) const
 
 void jcf::AppOptions::save()
 {
+    if (readOnly)
+    {
+        DBG("jcf::AppOptions::save() skipped - readonly");
+        return;
+    }
+
     DBG("jcf::AppOptions::save()");
 
     {
@@ -131,7 +137,8 @@ void jcf::AppOptions::save()
 
 void jcf::AppOptions::load()
 {
-    DBG ("jcf::AppOptions::load()");
+
+	DBG("jcf::AppOptions::load()");
 
     InterProcessLock::ScopedLockType l (*lock);
 
