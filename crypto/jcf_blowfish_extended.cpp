@@ -101,7 +101,7 @@ void BlowfishExtended::addPaddingPKCS5 (MemoryBlock& memoryBlock)
     if (numBytes == 0)
         numBytes = 8;
 
-    std::vector<uint8> padding (numBytes, uint8 (numBytes));
+    std::vector<uint8> padding (static_cast<size_t>(numBytes), uint8 (numBytes));
     memoryBlock.append (padding.data(), padding.size());
 }
 

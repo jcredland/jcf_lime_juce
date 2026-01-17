@@ -28,7 +28,7 @@ namespace jcf
 namespace FontAwesomeData {
 	extern const char*  FontAwesome_otf;
 	const int           FontAwesome_otfSize = 106260;
-};
+}
 
 
 /**

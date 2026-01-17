@@ -32,7 +32,7 @@ public:
         // @note: data could be aligned to a cache line boundary.
         // Allocate double size buffer to easily support variable length messages,
         // by hanging them over the end of the buffer.
-        fifodata = new char[RingBufferSize * 2];
+        fifodata = new char[size_t(RingBufferSize) * 2];
     }
 
     ~LockFreeCallQueue() { delete[] fifodata; }

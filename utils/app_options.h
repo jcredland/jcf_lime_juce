@@ -14,7 +14,7 @@ class AppOptions : public juce::ValueTree::Listener, juce::Timer, juce::ActionLi
 public:
 	explicit AppOptions(const juce::File& file, bool readonly = false);
 
-    ~AppOptions();
+    ~AppOptions() override;
 
     void actionListenerCallback (const juce::String& message) override;
 
@@ -48,7 +48,7 @@ public:
     public:
         virtual ~Listener();
         /** Is called before optionsChanged in case you need to do some early work! */
-        virtual void optionsChangedEarlyCallback (const juce::Identifier& /* identifierThatChanged */){};
+        virtual void optionsChangedEarlyCallback (const juce::Identifier& /* identifierThatChanged */) {}
         virtual void optionsChanged (const juce::Identifier& identifierThatChanged) = 0;
     };
 

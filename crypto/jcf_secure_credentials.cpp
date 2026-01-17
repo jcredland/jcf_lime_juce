@@ -48,8 +48,8 @@ void StoredCredentials::load()
     }
 }
 
-LocalKeyData::LocalKeyData (const uint8* fixedKeyDataLen24, const File& localKeyDataLen32)
-    : localKeyDataLen32 (localKeyDataLen32), fixedKeyDataLen24 (fixedKeyDataLen24)
+LocalKeyData::LocalKeyData (const uint8* fixedKey24, const File& localKey32)
+    : localKeyDataLen32 (localKey32), fixedKeyDataLen24 (fixedKey24)
 {
     key.reserve (72);
 }
@@ -69,8 +69,8 @@ void LocalKeyData::clear()
 
     key.clear();
 }
-StoredCredentials::StoredCredentials (const File& fileOfLastResort, const String& serviceName, KeyData* keyData, bool deleteKeyDataWhenFinished)
-    : serviceName (serviceName), file (fileOfLastResort), keyData (keyData), deleteKeyData (deleteKeyDataWhenFinished)
+StoredCredentials::StoredCredentials (const File& fileOfLastResort, const String& service, KeyData* keyDataPtr, bool deleteKeyDataWhenFinished)
+    : serviceName (service), file (fileOfLastResort), keyData (keyDataPtr), deleteKeyData (deleteKeyDataWhenFinished)
 {
     load();
 }

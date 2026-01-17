@@ -9,7 +9,7 @@ class MultiAsyncUpdater : juce::AsyncUpdater
 public:
     MultiAsyncUpdater() = default;
 
-    ~MultiAsyncUpdater()
+    ~MultiAsyncUpdater() override
     {
         JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED; // async updater
     }

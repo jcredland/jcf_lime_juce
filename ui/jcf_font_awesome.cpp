@@ -82,7 +82,7 @@ void FontAwesomeIcons::drawIconRotated (Graphics& g, int iconCode, const Rectang
     g.restoreState();
 }
 
-FontAwesomeIcons::IconComponent::IconComponent (int iconCode, const Colour& colour) : colour (colour), iconCode (iconCode) {}
+FontAwesomeIcons::IconComponent::IconComponent (int code, const Colour& col) : colour (col), iconCode (code) {}
 
 void FontAwesomeIcons::IconComponent::paint (Graphics& g)
 {

@@ -6,8 +6,8 @@
 namespace jcf
 {
 using namespace juce;
-LightweightThread::LightweightThread (std::function<void (Thread*)> func, int threadExitTime)
-    : Thread ("lc lightweight thread"), func (std::move (func)), threadExitTime (threadExitTime)
+LightweightThread::LightweightThread (std::function<void (Thread*)> f, int exitTime)
+    : Thread ("lc lightweight thread"), func (std::move (f)), threadExitTime (exitTime)
 {
     startThread (Priority::normal);
 }
@@ -43,7 +43,7 @@ bool ApplicationActivtyMonitor::isApplicationRecentlyActive() const
     return isActive;
 }
 
-void ApplicationActivtyMonitor::mouseMove (const MouseEvent& mouse_event)
+void ApplicationActivtyMonitor::mouseMove (const MouseEvent& /*mouse_event*/)
 {
     counter = 0;
 }
@@ -90,7 +90,7 @@ String bytesToFormattedString (int64 bytes, int precision)
 
         auto b = double (bytes) / std::pow (1024.0, unitIndex);
 
-        return prefix + toDecimalStringWithSignificantFigures (b, precision) + units[unitIndex];
+        return prefix + toDecimalStringWithSignificantFigures (b, precision) + units[size_t(unitIndex)];
     }
 
     return String (0);
@@ -130,8 +130,8 @@ void BasicImageComponent::paint (Graphics& g)
         d->drawWithin (g, getLocalBounds().toFloat(), RectanglePlacement::centred, 1.0f);
 }
 
-RateLimitedCallback::RateLimitedCallback (std::function<void()> function, int rateLimitMilliSeconds)
-    : function (function), rateLimitMilliSeconds (rateLimitMilliSeconds)
+RateLimitedCallback::RateLimitedCallback (std::function<void()> func, int rateLimitMs)
+    : function (std::move(func)), rateLimitMilliSeconds (rateLimitMs)
 {
 }
 

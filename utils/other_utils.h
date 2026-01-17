@@ -45,7 +45,7 @@ class LightweightThread : public juce::Thread
 public:
     LightweightThread (std::function<void (Thread*)> func, int threadExitTime = 20000);
 
-    ~LightweightThread();
+    ~LightweightThread() override;
 
     void run() override;
     std::function<void (Thread*)> func;
@@ -131,7 +131,7 @@ public:
      */
     ApplicationActivtyMonitor (int timeoutSeconds);
 
-    ~ApplicationActivtyMonitor();
+    ~ApplicationActivtyMonitor() override;
 
     void onApplicationBecomesActive (std::function<void()> fun);
 
@@ -221,7 +221,7 @@ template <class T>
 class ArraySaver
 {
 public:
-    ArraySaver (const juce::File& saveFile, const juce::Identifier& identifier) : identifier (identifier), saveFile (saveFile) {}
+    ArraySaver (const juce::File& file, const juce::Identifier& id) : identifier (id), saveFile (file) {}
 
     virtual ~ArraySaver() = default;
 
@@ -313,7 +313,7 @@ class RateLimitedCallback : juce::Timer, juce::AsyncUpdater
 public:
     RateLimitedCallback (std::function<void()> function, int rateLimitMilliSeconds);
 
-    ~RateLimitedCallback();
+    ~RateLimitedCallback() override;
 
     void trigger();
 

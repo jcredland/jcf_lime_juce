@@ -70,7 +70,7 @@ public:
     AppOptions& appOptions;
 };
 
-jcf::AppOptions::AppOptions(const File& file, bool readOnly): file(file), readOnly (readOnly)
+jcf::AppOptions::AppOptions(const File& f, bool isReadOnly): readOnly (isReadOnly), file(f)
 {
     // lock = new InterProcessLock(file.getFullPathName());
     lock = std::make_unique<InterProcessLock> (file.getFullPathName());
@@ -98,7 +98,7 @@ void jcf::AppOptions::actionListenerCallback(const String& message)
 
 void jcf::AppOptions::setOption(const Identifier& identifier, var value)
 {
-    ScopedLock lock{ stateLock };
+    ScopedLock sl{ stateLock };
 
     auto currentValue = operator[] (identifier);
 
@@ -108,7 +108,7 @@ void jcf::AppOptions::setOption(const Identifier& identifier, var value)
 
 const juce::var jcf::AppOptions::operator[](const Identifier& identifier) const
 {
-    ScopedLock lock{ stateLock };
+    ScopedLock sl{ stateLock };
 
     return state[identifier];
 }
@@ -148,7 +148,7 @@ void jcf::AppOptions::load()
         return;
 
     {
-        ScopedLock lock{ stateLock };
+        ScopedLock sl{ stateLock };
         preventTriggeringSave = true;
         state.copyPropertiesFrom (newState, nullptr);
         preventTriggeringSave = false;
@@ -163,7 +163,7 @@ juce::Value jcf::AppOptions::getValueObject(const Identifier& identifier)
 
 void jcf::AppOptions::setDefault(const Identifier& identifier, var defaultValue)
 {
-    ScopedLock lock{ stateLock };
+    ScopedLock sl{ stateLock };
 
     if (! state.hasProperty (identifier))
         setOption (identifier, defaultValue);
@@ -171,7 +171,7 @@ void jcf::AppOptions::setDefault(const Identifier& identifier, var defaultValue)
 
 void jcf::AppOptions::setDefaultAndRestrictToPermittedList(const Identifier& identifier, const Array<var>& permittedList, var defaultValue)
 {
-    ScopedLock lock{ stateLock };
+    ScopedLock sl{ stateLock };
 
     if (! state.hasProperty (identifier))
     {
@@ -216,7 +216,7 @@ void jcf::AppOptions::timerCallback()
     std::set<Identifier> copyOfIds;
 
     {
-        ScopedLock lock{ stateLock };
+        ScopedLock sl{ stateLock };
         copyOfIds = identifiersThatChanged;
         identifiersThatChanged.clear();
     }
@@ -235,7 +235,7 @@ void jcf::AppOptions::timerCallback()
 
 void jcf::AppOptions::valueTreePropertyChanged(ValueTree&, const Identifier& identifier)
 {
-    ScopedLock lock{ stateLock };
+    ScopedLock sl{ stateLock };
 
     DBG ("jcf::AppOptions::valueTreePropertyChanged() " + identifier);
     triggerTimer();
