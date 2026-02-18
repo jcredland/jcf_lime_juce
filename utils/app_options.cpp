@@ -92,8 +92,16 @@ jcf::AppOptions::~AppOptions()
 
 void jcf::AppOptions::actionListenerCallback(const String& message)
 {
-    if (message == file.getFullPathName() && suppressCallback-- > 0)
-        load();
+    if (message != file.getFullPathName())
+        return;
+
+    if (suppressCallback > 0)
+    {
+        suppressCallback--;
+        return;  // We sent this broadcast (our own save), skip reload
+    }
+
+    load();  // Another process saved, reload
 }
 
 void jcf::AppOptions::setOption(const Identifier& identifier, var value)
@@ -137,8 +145,7 @@ void jcf::AppOptions::save()
 
 void jcf::AppOptions::load()
 {
-
-	DBG("jcf::AppOptions::load()");
+    DBG("jcf::AppOptions::load()");
 
     InterProcessLock::ScopedLockType l (*lock);
 
@@ -153,6 +160,22 @@ void jcf::AppOptions::load()
         state.copyPropertiesFrom (newState, nullptr);
         preventTriggeringSave = false;
     }
+
+    // Drain identifiers accumulated during copyPropertiesFrom and notify
+    // listeners directly. We bypass the timer to avoid timerCallback calling
+    // save() and re-broadcasting, which would cause an infinite cascade.
+    std::set<Identifier> changedIds;
+    {
+        ScopedLock lock{ stateLock };
+        changedIds = std::move(identifiersThatChanged);
+        identifiersThatChanged.clear();
+    }
+
+    for (auto& i : changedIds)
+        listeners.call (&Listener::optionsChangedEarlyCallback, i);
+    
+    for (auto& i : changedIds)
+        listeners.call (&Listener::optionsChanged, i);
 }
 
 juce::Value jcf::AppOptions::getValueObject(const Identifier& identifier)

@@ -16,6 +16,9 @@ public:
 
     ~AppOptions() override;
 
+    /** Receives cross-process broadcast messages. Reloads options from disk
+     *  when another process saves; skips reload for our own broadcasts. 
+     */
     void actionListenerCallback (const juce::String& message) override;
 
     void setOption (const juce::Identifier& identifier, juce::var value);
@@ -82,6 +85,8 @@ private:
     std::unique_ptr<juce::InterProcessLock> lock;
 
     juce::ListenerList<Listener, juce::Array<Listener*, juce::CriticalSection>> listeners;
+    /** Counts pending own-broadcast messages to suppress. Incremented in save(),
+     *  decremented when our own broadcast is received back. */
     int suppressCallback{ 0 };
 
     std::unique_ptr<ThreadSafeValueProxy> valueProxy;
