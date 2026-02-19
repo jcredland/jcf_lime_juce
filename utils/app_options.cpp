@@ -80,6 +80,7 @@ jcf::AppOptions::AppOptions(const File& f, bool isReadOnly): readOnly (isReadOnl
     state.addListener (this);
 
     valueProxy = std::make_unique<ThreadSafeValueProxy> (*this);
+    debouncedLoad = std::make_unique<RateLimitedCallback> ([this]() { load(); }, 200);
 }
 
 jcf::AppOptions::~AppOptions()
@@ -137,10 +138,13 @@ void jcf::AppOptions::save()
         jcf::saveValueTreeToXml (file, state);
     }
 
-    suppressCallback++;
+    if (! broadcastDisabled)
+    {
+        suppressCallback++;
 
-    if (MessageManager::getInstanceWithoutCreating() != nullptr) // check to avoid a barely comprehensible crash on some shutdowns
-        MessageManager::broadcastMessage(file.getFullPathName());
+        if (MessageManager::getInstanceWithoutCreating() != nullptr) // check to avoid a barely comprehensible crash on some shutdowns
+            MessageManager::broadcastMessage (file.getFullPathName());
+    }
 }
 
 void jcf::AppOptions::load()
@@ -254,6 +258,18 @@ void jcf::AppOptions::timerCallback()
 
     for (auto& i : copyOfIds)
         listeners.call (&Listener::optionsChanged, i);
+
+    listeners.call (&Listener::optionsChangedLocally);
+}
+
+void jcf::AppOptions::loadRateLimited()
+{
+    debouncedLoad->trigger();
+}
+
+void jcf::AppOptions::disableBroadcastMessage()
+{
+    broadcastDisabled = true;
 }
 
 void jcf::AppOptions::valueTreePropertyChanged(ValueTree&, const Identifier& identifier)

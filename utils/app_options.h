@@ -29,6 +29,13 @@ public:
 
     void load();
 
+    /** Schedules a reload from disk, coalescing rapid calls via RateLimitedCallback. */
+    void loadRateLimited();
+
+    /** Suppresses broadcastMessage in save(). Call after wiring up an alternative
+     *  cross-process notification mechanism (e.g. a notification bus). */
+    void disableBroadcastMessage();
+
     juce::Value getValueObject (const juce::Identifier& identifier);
 
     /**
@@ -53,6 +60,11 @@ public:
         /** Is called before optionsChanged in case you need to do some early work! */
         virtual void optionsChangedEarlyCallback (const juce::Identifier& /* identifierThatChanged */) {}
         virtual void optionsChanged (const juce::Identifier& identifierThatChanged) = 0;
+
+        /** Called once after save() when options were changed locally (by this process).
+         *  Not called during load() — only for changes originating here.
+         *  Use this to notify other processes that options have changed. */
+        virtual void optionsChangedLocally() {}
     };
 
     void addListener (Listener* listener);
@@ -90,6 +102,9 @@ private:
     int suppressCallback{ 0 };
 
     std::unique_ptr<ThreadSafeValueProxy> valueProxy;
+
+    bool broadcastDisabled{ false };
+    std::unique_ptr<RateLimitedCallback> debouncedLoad;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AppOptions)
 };
