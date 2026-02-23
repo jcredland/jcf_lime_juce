@@ -150,6 +150,7 @@ void jcf::AppOptions::save()
 void jcf::AppOptions::load()
 {
     DBG("jcf::AppOptions::load()");
+    JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
 
     InterProcessLock::ScopedLockType l (*lock);
 
