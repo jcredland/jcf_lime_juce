@@ -96,7 +96,7 @@ std::unique_ptr<DrawableText> FontAwesomeIcons::createDrawable (int iconCode, fl
     d->setColour (fgColour);
     d->setText (String::charToString (iconCode));
 #if JUCE_MAJOR_VERSION >= 8
-    d->setFont (Font (FontOptions().withTypeface (getTypeface())).withHeight (height), true);
+    d->setFont (Font (FontOptions(getTypeface())).withHeight (height), true);
 #else
     d->setFont (Font (getTypeface()).withHeight (height), true);
 #endif
