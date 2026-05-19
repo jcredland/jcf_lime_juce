@@ -24,7 +24,17 @@ namespace jcf {
  * A unit-test is provided in the _tests directory which be useful reference.
  */
 
-class LockFreeCallQueue
+/**
+ * @deprecated Use LockFreeCallQueueV2.
+ *
+ * The destructor of this class frees the FIFO buffer without invoking
+ * destructors on any WorkItems still pending in the queue. If you queue
+ * something that owns resources (e.g. a lambda capturing a juce::Uuid or any
+ * other object with a non-trivial destructor) and the consumer thread doesn't
+ * drain the queue before the queue is destroyed, those resources leak.
+ * LockFreeCallQueueV2 fixes this with a destruct-only path.
+ */
+class [[deprecated ("Use LockFreeCallQueueV2 — see header for details")]] LockFreeCallQueue
 {
 public:
     LockFreeCallQueue (int RingBufferSize) : fifo (RingBufferSize), acceptingJobs (true)
@@ -205,6 +215,140 @@ private:
     }
 
     bool acceptingJobs;
+};
+
+/**
+ * @brief Drop-in replacement for LockFreeCallQueue that correctly destructs
+ *        pending WorkItems on destruction.
+ *
+ * Same single-producer / single-consumer contract as LockFreeCallQueue:
+ *   - call callf() from one thread
+ *   - call synchronize() from another thread
+ *
+ * Difference: each WorkItem stores two function pointers (execute+destruct,
+ * destruct-only). On destruction, the queue walks any unconsumed items and
+ * destructs them without executing — avoiding the resource leak that affects
+ * LockFreeCallQueue when the consumer never drains the queue.
+ *
+ * Cost: 8 bytes per queued WorkItem for the extra function pointer.
+ */
+class LockFreeCallQueueV2
+{
+public:
+    LockFreeCallQueueV2 (int RingBufferSize) : fifo (RingBufferSize), acceptingJobs (true)
+    {
+        fifodata = new char[size_t (RingBufferSize) * 2];
+    }
+
+    ~LockFreeCallQueueV2()
+    {
+        drainAndDestructPending();
+        delete[] fifodata;
+    }
+
+    bool isEmpty() const { return fifo.getTotalSize() == fifo.getFreeSpace() + 1; }
+    int  getFreeSpace() { return fifo.getFreeSpace(); }
+
+    template <class Functor>
+    bool callf (Functor const& f)
+    {
+        if (! acceptingJobs)
+            return false;
+
+        const int allocSize = roundUpToCacheLineBoundary (static_cast<int> (sizeof (WorkItem<Functor>)));
+
+        int idx1, idx2, sz1, sz2;
+        fifo.prepareToWrite (allocSize, idx1, sz1, idx2, sz2);
+
+        if (sz1 + sz2 < allocSize)
+            return false;
+
+        new (fifodata + idx1) WorkItem<Functor> (f);
+        fifo.finishedWrite (allocSize);
+        return true;
+    }
+
+    bool synchronize()
+    {
+        bool didSomething = false;
+
+        while (fifo.getNumReady() > 0)
+        {
+            int idx1, idx2, sz1, sz2;
+            fifo.prepareToRead (1, idx1, sz1, idx2, sz2);
+            didSomething = true;
+            Work* w = reinterpret_cast<Work*> (fifodata + idx1);
+            const int sizeofWorkItem = (*w->execAndDestructFn) (w);
+            fifo.finishedRead (roundUpToCacheLineBoundary (sizeofWorkItem));
+        }
+
+        return didSomething;
+    }
+
+    /** Disables the queue — subsequent callf() calls will be rejected.
+        Useful during shutdown to avoid races against the destructor. */
+    void stop() { acceptingJobs = false; }
+
+private:
+    using WorkExecAndDestructFn = int (*) (void*);
+    using WorkDestructOnlyFn    = int (*) (void*);
+
+    class Work
+    {
+    public:
+        Work (WorkExecAndDestructFn e, WorkDestructOnlyFn d) : execAndDestructFn (e), destructOnlyFn (d) {}
+
+        WorkExecAndDestructFn execAndDestructFn;
+        WorkDestructOnlyFn    destructOnlyFn;
+    };
+
+    template <class Functor>
+    struct WorkItem : public Work
+    {
+        explicit WorkItem (Functor const& fun)
+            : Work (&WorkItem::executeAndDestruct, &WorkItem::destructOnly), myCall (fun)
+        {
+        }
+
+    private:
+        static int executeAndDestruct (void* storage)
+        {
+            auto* that = reinterpret_cast<WorkItem*> (storage);
+            that->myCall();
+            that->~WorkItem();
+            return static_cast<int> (sizeof (WorkItem));
+        }
+
+        static int destructOnly (void* storage)
+        {
+            auto* that = reinterpret_cast<WorkItem*> (storage);
+            that->~WorkItem();
+            return static_cast<int> (sizeof (WorkItem));
+        }
+
+        Functor myCall;
+    };
+
+    void drainAndDestructPending()
+    {
+        while (fifo.getNumReady() > 0)
+        {
+            int idx1, idx2, sz1, sz2;
+            fifo.prepareToRead (1, idx1, sz1, idx2, sz2);
+            Work* w = reinterpret_cast<Work*> (fifodata + idx1);
+            const int sizeofWorkItem = (*w->destructOnlyFn) (w);
+            fifo.finishedRead (roundUpToCacheLineBoundary (sizeofWorkItem));
+        }
+    }
+
+    static int roundUpToCacheLineBoundary (int x)
+    {
+        return x; // matches LockFreeCallQueue behaviour
+    }
+
+    juce::AbstractFifo fifo;
+    char*              fifodata;
+    bool               acceptingJobs;
 };
 
 }
