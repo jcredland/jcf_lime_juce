@@ -30,6 +30,62 @@
 #define EXPLORER_OR_FINDER "Finder"
 #endif
 
+namespace jcf
+{
+
+/** Platform-conventional name for the Command / Control modifier key.
+
+    Returns the Unicode glyph on macOS and the spelled-out name elsewhere, for
+    use in menus, tooltips and shortcut hints. The macOS glyphs are UTF-8, so
+    these always build the String with String::fromUTF8 — callers use the result
+    directly and never handle the raw bytes.
+
+    @see altKey, shiftKey, keyCombo
+*/
+inline juce::String commandKey()
+{
+   #if JUCE_MAC
+    return juce::String::fromUTF8 ("\xe2\x8c\x98"); // U+2318 PLACE OF INTEREST SIGN (Command)
+   #else
+    return "Ctrl";
+   #endif
+}
+
+/** Platform-conventional name for the Alt / Option modifier key. @see commandKey */
+inline juce::String altKey()
+{
+   #if JUCE_MAC
+    return juce::String::fromUTF8 ("\xe2\x8c\xa5"); // U+2325 OPTION KEY
+   #else
+    return "Alt";
+   #endif
+}
+
+/** Platform-conventional name for the Shift modifier key. @see commandKey */
+inline juce::String shiftKey()
+{
+   #if JUCE_MAC
+    return juce::String::fromUTF8 ("\xe2\x87\xa7"); // U+21E7 UPWARDS WHITE ARROW (Shift)
+   #else
+    return "Shift";
+   #endif
+}
+
+/** Joins two modifier-key names the way each platform writes a chord: adjacent
+    glyphs on macOS (e.g. the Command + Shift glyphs), "+"-separated names
+    elsewhere (e.g. "Ctrl+Shift"). @see commandKey
+*/
+inline juce::String keyCombo (const juce::String& a, const juce::String& b)
+{
+   #if JUCE_MAC
+    return a + b;
+   #else
+    return a + "+" + b;
+   #endif
+}
+
+} // namespace jcf
+
 namespace juce
 {
 inline bool operator< (const Identifier& a, const Identifier& b)
