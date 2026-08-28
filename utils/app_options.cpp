@@ -135,7 +135,30 @@ void jcf::AppOptions::save()
     {
         InterProcessLock::ScopedLockType l (*lock);
         ScopedLock l0{ stateLock };
-        jcf::saveValueTreeToXml (file, state);
+
+        // Write our own changes over what is in the file rather than replacing the lot. Another
+        // process may have changed a setting since we last read, and our copy of that setting is
+        // then out of date - writing the whole tree would put the old value back.
+        //
+        // Note we deliberately do not adopt what we read into state. That would fire listeners
+        // from inside a save, and save() is called from the destructor where the message thread
+        // may be gone. Reading fresh values is what load() and the change notifications are for.
+        auto onDisk = jcf::loadValueTreeFromXml (file);
+
+        if (onDisk.isValid())
+        {
+            for (const auto& identifier : identifiersChangedSinceSave)
+                onDisk.setProperty (identifier, state[identifier], nullptr);
+
+            jcf::saveValueTreeToXml (file, onDisk);
+        }
+        else
+        {
+            // No readable file yet - ours is the only copy there is.
+            jcf::saveValueTreeToXml (file, state);
+        }
+
+        identifiersChangedSinceSave.clear();
     }
 
     if (! broadcastDisabled)
@@ -280,6 +303,11 @@ void jcf::AppOptions::valueTreePropertyChanged(ValueTree&, const Identifier& ide
     DBG ("jcf::AppOptions::valueTreePropertyChanged() " + identifier);
     triggerTimer();
     identifiersThatChanged.insert(identifier);
+
+    // preventTriggeringSave is set while load() copies the file into state, so this tells a
+    // change we made apart from one we just read. Only ours should be written back.
+    if (! preventTriggeringSave)
+        identifiersChangedSinceSave.insert (identifier);
 }
 
 void jcf::AppOptions::valueTreeChildAdded (ValueTree&, ValueTree&)

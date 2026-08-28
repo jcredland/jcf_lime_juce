@@ -90,6 +90,13 @@ private:
     bool readOnly{ false };
     juce::File file;
     std::set<juce::Identifier> identifiersThatChanged;
+
+    /** Settings this process has changed and not yet written. save() writes these over
+        whatever is in the file, leaving everything else in the file alone, so a save does
+        not undo a change another process made while we were holding an older copy. Cleared
+        by save(). Changes that arrived from the file in load() are not counted. */
+    std::set<juce::Identifier> identifiersChangedSinceSave;
+
     bool preventTriggeringSave{};
 
     class ThreadSafeValueProxy;
